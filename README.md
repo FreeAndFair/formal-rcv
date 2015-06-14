@@ -14,12 +14,21 @@ of auditing RCV elections.
 Links to Statutes
 -----------------
 
+* Berkeley, CA
+  * [Berkeley Charter][berkeley_codes] (See Article III, Sec. 5.12.)
+  * [Berkeley Municipal Codes][berkeley_codes] (See Title 2, Chapter 2.14.)
+* Minneapolis, MN
+  * TODO
 * Oakland, CA
   * [Oakland Charter][oakland_charter] (See Article XI, Sec. 1105. Ranked
     Choice Voting.)
 * San Francisco, CA
   * [SF Charter][sf_charter] (See Article XIII, Sec. 13.102. Instant Runoff
     Elections.)
+* San Leandro, CA
+  * TODO
+* Saint Paul, MN
+  * TODO
 
 
 License
@@ -35,6 +44,7 @@ Contributors
 * Chris Jerdonek
 
 
+[berkeley_codes]: http://codepublishing.com/ca/berkeley/
 [Coq]: https://coq.inria.fr/
 [irv]: https://en.wikipedia.org/wiki/Instant-runoff_voting
 [oakland_charter]: https://www.municode.com/library/ca/oakland/codes/code_of_ordinances?nodeId=THCHOA
