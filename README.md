@@ -22,23 +22,21 @@ Jurisdiction Sources
 This section contains links to statutes and other sources that describe
 the RCV rules in each jurisdiction we are interested in.
 
-* Berkeley, CA: [Municipal Codes][berkeley_codes].
+* Berkeley, CA, [Municipal Codes][berkeley_codes].
   See Charter, Article III, Sec. 5.12, "Use of instant runoff voting in lieu
   of runoff elections"; and Municipal Code, Title 2, Chapter 2.14,
   "Elections -- Instant Runoff Voting."
 * Cambridge, MA
   * TODO
-* Minneapolis, MN: [Code of Ordinances][minneapolis_codes].
+* Minneapolis, MN, [Code of Ordinances][minneapolis_codes].
   See Charter, Article III, Sec. 3.1; and Code of Ordinances, Title 8.5,
   Chapter 167, "Municipal Elections: Rules of Conduct."
-* Oakland, CA
-  * [Oakland Charter][oakland_charter] (See Article XI, Sec. 1105. Ranked
-    Choice Voting.)
+* Oakland, CA, [Charter][oakland_charter].  See Article XI, Sec. 1105,
+  "Ranked Choice Voting."
 * Portland, ME
   * TODO
-* San Francisco, CA
-  * [SF Charter][sf_charter] (See Article XIII, Sec. 13.102. Instant Runoff
-    Elections.)
+* San Francisco, CA, [Charter][sf_charter].  See Article XIII, Sec. 13.102,
+  "Instant Runoff Elections."
 * San Leandro, CA
   * TODO
 * Saint Paul, MN
