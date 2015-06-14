@@ -20,7 +20,7 @@ import sys
 ENCODING = 'utf-8'
 WIDTH = 72
 
-def normalize_spaces(line):
+def collapse_spaces(line):
     """Replace substrings of whitespace with a single space."""
     return " ".join(line.split())
 
@@ -33,7 +33,7 @@ def main(argv):
         text = f.read()
 
     paras = text.split("\n\n")
-    paras = [textwrap.fill(normalize_spaces(para), width=WIDTH) for para in paras]
+    paras = [textwrap.fill(collapse_spaces(para), width=WIDTH) for para in paras if para.strip()]
     text = "\n\n".join(paras)
     # Ensure the file ends in a newline.
     text += "\n"
