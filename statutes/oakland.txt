@@ -1,68 +1,172 @@
 OAKLAND CHARTER
 
-[Obtained from--
-https://www.municode.com/library/ca/oakland/codes/code_of_ordinances?nodeId=16308 on June 13, 2015.]
+[Obtained from-- https://www.municode.com/library/ca/oakland/codes/code_
+of_ordinances?nodeId=16308 on June 13, 2015.]
 
 ARTICLE XI: ELECTIONS
 
-Section 1105. Ranked Choice Voting. Elections for all city offices, including but not limited to Mayor, Councilmember, City Attorney, City Auditor, and School Director, shall be conducted using ranked choice voting, known sometimes as "instant runoff voting."
+Section 1105. Ranked Choice Voting. Elections for all city offices,
+including but not limited to Mayor, Councilmember, City Attorney, City
+Auditor, and School Director, shall be conducted using ranked choice
+voting, known sometimes as "instant runoff voting."
 
-(a)
-Definitions. "Ranked choice voting" shall mean an election system in which voters rank the candidates for office in order of preference, and the ballots are counted in rounds that, in the case of a single-winner election, simulate a series of runoffs until one candidate receives a majority of votes. In each round of counting: (1) "continuing ballot" shall mean a ballot that counts towards some candidate; (2) "continuing candidate" shall mean a candidate that has not been eliminated; and (3) "majority of votes" shall mean more than fifty percent of the votes coming from continuing ballots.
+(a) Definitions. "Ranked choice voting" shall mean an election system in
+which voters rank the candidates for office in order of preference, and
+the ballots are counted in rounds that, in the case of a single-winner
+election, simulate a series of runoffs until one candidate receives a
+majority of votes. In each round of counting: (1) "continuing ballot"
+shall mean a ballot that counts towards some candidate; (2) "continuing
+candidate" shall mean a candidate that has not been eliminated; and (3)
+"majority of votes" shall mean more than fifty percent of the votes
+coming from continuing ballots.
 
-(b)
-General Provisions. Ranked choice voting elections for single-winner city offices shall be conducted according to the procedures in this section. The City shall conduct a voter education campaign to familiarize voters with ranked choice voting. The use of ranked choice voting shall commence with the 2008 General Municipal Election.
+(b) General Provisions. Ranked choice voting elections for single-winner
+city offices shall be conducted according to the procedures in this
+section. The City shall conduct a voter education campaign to
+familiarize voters with ranked choice voting. The use of ranked choice
+voting shall commence with the 2008 General Municipal Election.
 
-(c)
-Ballot. The ranked choice voting ballot shall allow voters to rank as many choices as there are candidates. The ballot shall not interfere with a voter's ability to rank a write-in candidate.
+(c) Ballot. The ranked choice voting ballot shall allow voters to rank
+as many choices as there are candidates. The ballot shall not interfere
+with a voter's ability to rank a write-in candidate.
 
-(d)
-Tabulation. The ballots shall be counted in rounds: (1) in the first round, every ballot shall count as a vote towards the first choice candidate. (2) After every round, if any candidate receives a majority of votes from the continuing ballots, that candidate shall be declared the winner, If no candidate receives a majority, the candidate receiving the smallest number of votes shall be eliminated, and every ballot counting towards that candidate shall be advanced to the next-ranked continuing candidate. All the ballots shall be counted again in a new round.
+(d) Tabulation. The ballots shall be counted in rounds: (1) in the first
+round, every ballot shall count as a vote towards the first choice
+candidate. (2) After every round, if any candidate receives a majority
+of votes from the continuing ballots, that candidate shall be declared
+the winner, If no candidate receives a majority, the candidate receiving
+the smallest number of votes shall be eliminated, and every ballot
+counting towards that candidate shall be advanced to the next-ranked
+continuing candidate. All the ballots shall be counted again in a new
+round.
 
-(e)
-Ties. In the event that two or more candidates tie for the smallest number of votes, the candidate to eliminate shall be chosen by lot.
+(e) Ties. In the event that two or more candidates tie for the smallest
+number of votes, the candidate to eliminate shall be chosen by lot.
 
-(f)
-Elimination of more than one candidate. During the elimination stage of any round, in the event that any candidate has more votes than the combined vote total of all candidates with fewer votes. all the candidates with fewer votes shall be eliminated simultaneously, and those ballots advanced to the next ranked continuing candidate.
+(f) Elimination of more than one candidate. During the elimination stage
+of any round, in the event that any candidate has more votes than the
+combined vote total of all candidates with fewer votes. all the
+candidates with fewer votes shall be eliminated simultaneously, and
+those ballots advanced to the next ranked continuing candidate.
 
-(g)
-Skipped rankings. In the first or any round, in the event that any ballot reaches a ranking with no candidate indicated, that ballot shall immediately be advanced to the next ranking.
+(g) Skipped rankings. In the first or any round, in the event that any
+ballot reaches a ranking with no candidate indicated, that ballot shall
+immediately be advanced to the next ranking.
 
-(h)
-Undervotes, Overvotes, and Exhausted Ballots. After each round, any ballot that is not continuing is an undervote, overvote, or exhausted ballot, as follows: Any ballot that has no candidates indicated at any ranking shall be declared an "undervote." In the event that any ballot reaches a ranking with more than one candidate indicated, that ballot shall immediately be declared an "overvote." In the event that any ballot cannot be advanced because no further candidates are ranked on that ballot, that ballot shall immediately be declared "exhausted" Any ballot that has been declared an undervote, overvote. or exhausted shall remain so and shall not count towards any candidate in that round or in subsequent rounds.
+(h) Undervotes, Overvotes, and Exhausted Ballots. After each round, any
+ballot that is not continuing is an undervote, overvote, or exhausted
+ballot, as follows: Any ballot that has no candidates indicated at any
+ranking shall be declared an "undervote." In the event that any ballot
+reaches a ranking with more than one candidate indicated, that ballot
+shall immediately be declared an "overvote." In the event that any
+ballot cannot be advanced because no further candidates are ranked on
+that ballot, that ballot shall immediately be declared "exhausted" Any
+ballot that has been declared an undervote, overvote. or exhausted shall
+remain so and shall not count towards any candidate in that round or in
+subsequent rounds.
 
-(i)
-Reports. Summary, ballot image, and comprehensive reports shall be made available after each ranked choice voting election, as follows: (1) The "summary report" for a race shall mean a report that lists the candidate vote totals in each round, along with the cumulative numbers of undervotes, overvotes, and exhausted ballots in each round. (2) The "ballot image report" for a race shall mean a report that lists, for each ballot, the candidate or candidates indicated at each ranking, the precinct of the ballot, and whether the ballot was cast absentee. In the report, the ballots shall be listed in an order that does not permit the order in which they were cast in each precinct to be reconstructed. (3) The "comprehensive report" for a race shall mean a report that breaks the numbers in the summary report down by precinct. The report shall list for each round the number of ballots cast in each precinct (a) that count as votes for each candidate in that round, (b) that have been declared undervotes, (c) that have been declared overvotes up to that point, and (d) that have been declared exhausted up to that point. (4) Mode and manner of release. Preliminary versions of the summary report and ballot image report shall be made available as soon as possible after the ballots have begun to be processed and counted. The summary report, ballot image report, comprehensive report, and preliminary versions of the summary report and ballot image report shall be made available to the public during the canvass via the internet and by other means. The ballot image report and preliminary versions of the ballot image report shall be made available in a plain text electronic format.
+(i) Reports. Summary, ballot image, and comprehensive reports shall be
+made available after each ranked choice voting election, as follows: (1)
+The "summary report" for a race shall mean a report that lists the
+candidate vote totals in each round, along with the cumulative numbers
+of undervotes, overvotes, and exhausted ballots in each round. (2) The
+"ballot image report" for a race shall mean a report that lists, for
+each ballot, the candidate or candidates indicated at each ranking, the
+precinct of the ballot, and whether the ballot was cast absentee. In the
+report, the ballots shall be listed in an order that does not permit the
+order in which they were cast in each precinct to be reconstructed. (3)
+The "comprehensive report" for a race shall mean a report that breaks
+the numbers in the summary report down by precinct. The report shall
+list for each round the number of ballots cast in each precinct (a) that
+count as votes for each candidate in that round, (b) that have been
+declared undervotes, (c) that have been declared overvotes up to that
+point, and (d) that have been declared exhausted up to that point. (4)
+Mode and manner of release. Preliminary versions of the summary report
+and ballot image report shall be made available as soon as possible
+after the ballots have begun to be processed and counted. The summary
+report, ballot image report, comprehensive report, and preliminary
+versions of the summary report and ballot image report shall be made
+available to the public during the canvass via the internet and by other
+means. The ballot image report and preliminary versions of the ballot
+image report shall be made available in a plain text electronic format.
 
-(j)
-Manual Tally. Prior to the selection of precincts for the public one percent manual tally, as provided by State law, a report shall be made available to the public that lists, for the ballots subject to the manual tally, the number of those ballots in each precinct that counted in each round as undervotes, overvotes, exhausted ballots, and as votes for each candidate. The public manual tally shall check those vote totals in each of the randomly selected precincts.
+(j) Manual Tally. Prior to the selection of precincts for the public one
+percent manual tally, as provided by State law, a report shall be made
+available to the public that lists, for the ballots subject to the
+manual tally, the number of those ballots in each precinct that counted
+in each round as undervotes, overvotes, exhausted ballots, and as votes
+for each candidate. The public manual tally shall check those vote
+totals in each of the randomly selected precincts.
 
-(k)
-Changes to Procedures. For the purposes of this subsection: "voting equipment" shall mean all ballots and/or voting devices, vote tabulating systems and/or similar or related systems to be used in the conduct of the City's election, including but not limited to paper ballot systems, optical scan systems, and touchscreen systems.
+(k) Changes to Procedures. For the purposes of this subsection: "voting
+equipment" shall mean all ballots and/or voting devices, vote tabulating
+systems and/or similar or related systems to be used in the conduct of
+the City's election, including but not limited to paper ballot systems,
+optical scan systems, and touchscreen systems.
 
-(1)
-Number of rankings. In the event that the voting equipment cannot feasibly accommodate a number of rankings on the ballot equal to the number of candidates, the City Clerk may limit the number of choices a voter may rank to the maximum number allowed by the equipment. This limit shall never he less than three.
+(1) Number of rankings. In the event that the voting equipment cannot
+feasibly accommodate a number of rankings on the ballot equal to the
+number of candidates, the City Clerk may limit the number of choices a
+voter may rank to the maximum number allowed by the equipment. This
+limit shall never he less than three.
 
-(2)
-Voting Equipment. If the voting equipment cannot feasibly accommodate all of the procedures in subsections (e)-(j) above, the City Clerk may make changes to those procedures provided that ranked choice voting shall still be used and the smallest feasible number of changes made until such time as the voting equipment can accommodate those procedures in their entirety.
+(2) Voting Equipment. If the voting equipment cannot feasibly
+accommodate all of the procedures in subsections (e)-(j) above, the City
+Clerk may make changes to those procedures provided that ranked choice
+voting shall still be used and the smallest feasible number of changes
+made until such time as the voting equipment can accommodate those
+procedures in their entirety.
 
-(3)
-State Guidelines. If the State of California adopts guidelines for the conduct of ranked choice voting elections and the voting equipment used to conduct the City's election can accommodate the State's guidelines, the City Clerk shall have the option of adopting those guidelines, in whole or in part, in lieu of the ranked choice voting procedures in this section.
+(3) State Guidelines. If the State of California adopts guidelines for
+the conduct of ranked choice voting elections and the voting equipment
+used to conduct the City's election can accommodate the State's
+guidelines, the City Clerk shall have the option of adopting those
+guidelines, in whole or in part, in lieu of the ranked choice voting
+procedures in this section.
 
-(4)
-First Choice Tally. The City Clerk may authorize the following change to make ranked choice voting on voting equipment feasible: before counting the ballots in rounds, the first ranking on every ballot shall be tallied, with the exception of overvotes. If some candidate receives a majority of first rankings from all ballots cast, including undervotes and excluding overvotes, that candidate shall be declared the winner; and the ballots shall not he counted in rounds. Otherwise, the ballots shall be counted in rounds in accordance with this section.
+(4) First Choice Tally. The City Clerk may authorize the following
+change to make ranked choice voting on voting equipment feasible: before
+counting the ballots in rounds, the first ranking on every ballot shall
+be tallied, with the exception of overvotes. If some candidate receives
+a majority of first rankings from all ballots cast, including undervotes
+and excluding overvotes, that candidate shall be declared the winner;
+and the ballots shall not he counted in rounds. Otherwise, the ballots
+shall be counted in rounds in accordance with this section.
 
-(5)
-Election integrity. The City Clerk shall further have the authority to make any changes to these procedures necessary to preserve the secrecy of the ballot and ensure the integrity and smooth functioning of the election, provided that ranked choice voting shall still be used and the smallest number of changes made to achieve such purpose.
+(5) Election integrity. The City Clerk shall further have the authority
+to make any changes to these procedures necessary to preserve the
+secrecy of the ballot and ensure the integrity and smooth functioning of
+the election, provided that ranked choice voting shall still be used and
+the smallest number of changes made to achieve such purpose.
 
-(l)
-Exception from Using Ranked Choice Voting. Notwithstanding any other provision of this Charter, the City shall use ranked choice voting once the Alameda County Registrar of Voters is able to conduct the election on behalf of the City in accordance with the requirements and procedures of this section, including any changes to such procedures made pursuant to subsection (k).
+(l) Exception from Using Ranked Choice Voting. Notwithstanding any other
+provision of this Charter, the City shall use ranked choice voting once
+the Alameda County Registrar of Voters is able to conduct the election
+on behalf of the City in accordance with the requirements and procedures
+of this section, including any changes to such procedures made pursuant
+to subsection (k).
 
-(m)
-Election Procedures if Ranked Choice Voting is Not Used:
+(m) Election Procedures if Ranked Choice Voting is Not Used:
 
-(1)
-In the event that the City is unable to use ranked choice voting, the City shall hold Municipal Nominating Elections for the nomination of officers and for such other purposes as the Council may prescribe, which shall be held in the City on the first Tuesday after the first Monday in June in each even numbered year. In order to consolidate Municipal Nominating Elections with Statewide Primary Elections, the Council may by ordinance provide for a date for a Municipal Nominating Election which conforms to the date of a Statewide Primary Election. Any candidate receiving a majority of the vote cast for all candidates for that office at the Municipal Nominating Election shall be declared elected.
+(1) In the event that the City is unable to use ranked choice voting,
+the City shall hold Municipal Nominating Elections for the nomination of
+officers and for such other purposes as the Council may prescribe, which
+shall be held in the City on the first Tuesday after the first Monday in
+June in each even numbered year. In order to consolidate Municipal
+Nominating Elections with Statewide Primary Elections, the Council may
+by ordinance provide for a date for a Municipal Nominating Election
+which conforms to the date of a Statewide Primary Election. Any
+candidate receiving a majority of the vote cast for all candidates for
+that office at the Municipal Nominating Election shall be declared
+elected.
 
-(2)
-If at any Municipal Nominating Election there is any office to which no person was elected, then the two candidates for such office receiving the highest number of votes for such office shall be the candidates, and the only candidates, for such office whose names shall be printed upon ballots to be issued at the second or General Municipal Election; provided that, in any event, all persons receiving a number of votes equal to the highest number of votes received by any candidate shall also be candidates at such second election. The candidate receiving the highest number of votes cast for all candidates for that office at the second or General Municipal Election shall be declared elected.
+(2) If at any Municipal Nominating Election there is any office to which
+no person was elected, then the two candidates for such office receiving
+the highest number of votes for such office shall be the candidates, and
+the only candidates, for such office whose names shall be printed upon
+ballots to be issued at the second or General Municipal Election;
+provided that, in any event, all persons receiving a number of votes
+equal to the highest number of votes received by any candidate shall
+also be candidates at such second election. The candidate receiving the
+highest number of votes cast for all candidates for that office at the
+second or General Municipal Election shall be declared elected.
