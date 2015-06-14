@@ -2,28 +2,40 @@ Formal RCV
 ==========
 
 The purpose of this project is to make available formal specifications of
-[ranked choice voting][rcv] (RCV) methods, i.e. variants of
-[instant runoff voting][irv] (IRV) and the [single transferable vote][stv]
-(STV).
+[ranked choice voting][rcv] (RCV), also known as [instant runoff voting][irv]
+(IRV) in the case of a single winner and the [single transferable vote][stv]
+(STV) more generally.
 
-The focus will initially be on those methods used in US jurisdictions.  The
-project will use [Coq][coq].  The project will also aim to formalize ways
-of auditing RCV elections.
+The focus will initially be on those variants of RCV used in US
+jurisdictions.  The project will also aim to formalize ways of auditing RCV
+elections.
+
+The project will use [Coq][coq] for the formalization.
 
 This work will inform the work of IEEE's Voting System Standards Committee
 Working Group [VSSC 1622.6][vssc_1622_6] "Voting Methods Mathematical Models."
 
-Links to Statutes
------------------
 
-* Berkeley, CA
-  * [Berkeley Charter][berkeley_codes] (See Article III, Sec. 5.12.)
-  * [Berkeley Municipal Codes][berkeley_codes] (See Title 2, Chapter 2.14.)
-* Minneapolis, MN
+Jurisdiction Sources
+--------------------
+
+This section contains links to statutes and other sources that describe
+the RCV rules in each jurisdiction we are interested in.
+
+* Berkeley, CA: [Municipal Codes][berkeley_codes].
+  See Charter, Article III, Sec. 5.12, "Use of instant runoff voting in lieu
+  of runoff elections"; and Municipal Code, Title 2, Chapter 2.14,
+  "Elections -- Instant Runoff Voting."
+* Cambridge, MA
   * TODO
+* Minneapolis, MN: [Code of Ordinances][minneapolis_codes].
+  See Charter, Article III, Sec. 3.1; and Code of Ordinances, Title 8.5,
+  Chapter 167, "Municipal Elections: Rules of Conduct."
 * Oakland, CA
   * [Oakland Charter][oakland_charter] (See Article XI, Sec. 1105. Ranked
     Choice Voting.)
+* Portland, ME
+  * TODO
 * San Francisco, CA
   * [SF Charter][sf_charter] (See Article XIII, Sec. 13.102. Instant Runoff
     Elections.)
@@ -49,6 +61,7 @@ Contributors
 [berkeley_codes]: http://codepublishing.com/ca/berkeley/
 [coq]: https://coq.inria.fr/
 [irv]: https://en.wikipedia.org/wiki/Instant-runoff_voting
+[minneapolis_codes]: https://www.municode.com/library/mn/minneapolis/codes/code_of_ordinances?nodeId=11490
 [oakland_charter]: https://www.municode.com/library/ca/oakland/codes/code_of_ordinances?nodeId=THCHOA
 [rcv]: https://en.wikipedia.org/wiki/Ranked_Choice_Voting
 [sf_charter]: http://www.amlegal.com/library/ca/sfrancisco.shtml
