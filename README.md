@@ -60,7 +60,7 @@ Contributors
 [coq]: https://coq.inria.fr/
 [irv]: https://en.wikipedia.org/wiki/Instant-runoff_voting
 [minneapolis_codes]: https://www.municode.com/library/mn/minneapolis/codes/code_of_ordinances?nodeId=11490
-[oakland_charter]: https://www.municode.com/library/ca/oakland/codes/code_of_ordinances?nodeId=THCHOA
+[oakland_charter]: https://www.municode.com/library/ca/oakland/codes/code_of_ordinances?nodeId=16308
 [rcv]: https://en.wikipedia.org/wiki/Ranked_Choice_Voting
 [sf_charter]: http://www.amlegal.com/library/ca/sfrancisco.shtml
 [stv]: https://en.wikipedia.org/wiki/Single_transferable_vote
