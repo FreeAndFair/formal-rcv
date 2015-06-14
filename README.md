@@ -7,9 +7,11 @@ The purpose of this project is to make available formal specifications of
 (STV).
 
 The focus will initially be on those methods used in US jurisdictions.  The
-project will use [Coq][Coq].  The project will also aim to formalize ways
+project will use [Coq][coq].  The project will also aim to formalize ways
 of auditing RCV elections.
 
+This work will inform the work of IEEE's Voting System Standards Committee
+Working Group [VSSC 1622.6][vssc_1622_6] "Voting Methods Mathematical Models."
 
 Links to Statutes
 -----------------
@@ -45,9 +47,10 @@ Contributors
 
 
 [berkeley_codes]: http://codepublishing.com/ca/berkeley/
-[Coq]: https://coq.inria.fr/
+[coq]: https://coq.inria.fr/
 [irv]: https://en.wikipedia.org/wiki/Instant-runoff_voting
 [oakland_charter]: https://www.municode.com/library/ca/oakland/codes/code_of_ordinances?nodeId=THCHOA
 [rcv]: https://en.wikipedia.org/wiki/Ranked_Choice_Voting
 [sf_charter]: http://www.amlegal.com/library/ca/sfrancisco.shtml
 [stv]: https://en.wikipedia.org/wiki/Single_transferable_vote
+[vssc_1622_6]: http://grouper.ieee.org/groups/1622/groups/6/index.html
