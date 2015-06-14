@@ -1,0 +1,128 @@
+BERKELEY MUNICIPAL CODE
+
+[Obtained from-- http://codepublishing.com/ca/berkeley on June 13, 2015.]
+
+BERKELEY CHARTER
+
+ARTICLE III. ELECTIONS
+
+Section 5. Nomination and Election of Certain Officers.
+
+(12)    Use of instant runoff voting in lieu of runoff elections.
+
+For purposes of this charter "instant runoff voting" shall refer to a voting system which, in a single election, determines the candidate supported by the voters. Notwithstanding any section of this Charter to the contrary, upon a determination by the City Council of all of the following, that: a) the voting equipment and procedures are technically ready to handle instant runoff voting in municipal elections; b) instant runoff voting will not preclude the City from consolidating its municipal elections with the County; and c) instant runoff elections will not result in additional City election costs, the Council may by ordinance establish a system of instant runoff voting for the offices of Mayor, City Council, and Auditor in any manner permitted by the State of California Elections Code. Once the Council institutes a system of instant runoff voting, future elections shall be conducted as instant runoff voting elections, unless the Council finds that circumstances have changed such that one or more of the prior Council findings required by this section are no longer valid. In such case, the Council shall articulate the specific basis therefore in order to suspend an existing system of instant runoff voting. Subdivision (e) of Section 9 of Article V relating to the percentage threshold to trigger a runoff election shall have no application to a system of instant runoff voting. The City Clerk shall conduct voter and community education to familiarize voters with instant runoff voting.
+
+Title 2 ADMINISTRATION
+
+Chapter 2.14 ELECTIONS – INSTANT RUNOFF VOTING
+
+2.14.010 Definitions.
+
+A.    "Ranked choice voting" shall mean an election system in which voters rank the candidates for office in order of preference, and the ballots are counted in rounds that, in the case of a single-winner election, simulate a series of runoffs until one candidate receives a majority of votes. Also known as "instant runoff voting."
+
+B.    "Continuing ballot" shall mean a ballot that counts towards a continuing candidate.
+
+C.    "Continuing candidate" shall mean a candidate that has not been eliminated.
+
+D.    "Majority of votes" shall mean more than fifty percent of the votes cast on continuing ballots.
+
+E.    "Single winner contest" means an election contest in which there is one seat to be elected for a single office.
+
+F.    "Choice" means an indication on a ballot of a voter’s assigned ranking of candidates (i.e. first choice, second choice, third choice, etc.) for any single office according to the voter’s preference.
+
+G.    "Vote" means a ballot choice that is counted toward the election of a candidate. During each round of counting, each continuing ballot contains one vote. All first choices are votes and lower ranked choices are potential runoff votes that may, in accordance with the requirements of this chapter, be credited to and become votes for a candidate.
+
+H.    "Round of counting" or "round" means a step in the counting process during which votes for all continuing candidates are tabulated for the purpose of determining whether a candidate has achieved a majority of the votes cast for a particular office, and, absent a majority, which candidate or candidates must be eliminated.
+
+I.    "Next ranked" means the highest ranked choice for a continuing candidate.
+
+J.    "Exhausted ballot" means any ballot that cannot be advanced because no further continuing candidates are ranked on that ballot.
+
+K.    "Overvote" means any ballot with more than one candidate indicated for the same ranking.
+
+L.    "Undervote" means any ballot that has no candidates indicated at any ranking.
+
+M.    "Skipped ranking" means a ballot contains a higher ranking with no candidate indicated, and contains a lower ranking with a candidate indicated.
+
+N.    "Voting equipment" means all ballots and/or voting devices, vote tabulating systems and/or similar or related systems to be used in the conduct of the City’s election, including but not limited to paper ballot systems, optical scan systems, and direct recording electronic systems. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.020 General Provisions.
+
+A.    Ranked choice voting elections for single-winner city offices shall be conducted according to the procedures in this chapter, upon the certification by the California Secretary of State of an automated vote tabulation system that is able to perform instant runoff voting.
+
+B.    Ranked choice voting shall commence with the 2008 General Municipal Election, provided that if no automated system is certified for use for the 2008 General Municipal Election, by July 14, 2008, ranked choice voting will be implemented at the earliest election following certification, as long as certification occurs no later than the start of the candidate filing period for that election.
+
+C.    The Registrar of Voters must agree to the request for all election services that allow the City to use ranked choice voting and consolidation of the election prior to the use of ranked choice voting. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.025 Election Services.
+
+The request for election services submitted to the Registrar of Voters shall include all requirements and procedures enumerated in sections 2.14.030, 2.14.040, 2.14.050, 2.14.060, 2.14.070, 2.14.080, 2.14.090, and 2.14.100. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.030 Ballot.
+
+A.    The ranked choice voting ballot shall allow voters to rank three choices. The City Council may set a higher number of rankings by resolution provided that the higher number of rankings is consistent with the provisions of Charter Section 5 (12).
+
+B.    The ballot shall not interfere with a voter’s ability to rank a write-in candidate.
+
+C.    Instructions provided to voters shall conform substantially to the following specifications, but may be modified based on ballot design and voting equipment used:
+
+"Vote by ranking candidates in your order of choice. You may rank as many or as few candidates as you choose. Select a different candidate for each ranking. Select only one candidate in each ranking. Ranking more candidates will not hurt your higher ranked candidates. Do not skip rankings." (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.040 Tabulation.
+
+The ballots shall be counted in rounds.
+
+A.    In the first round, every ballot shall count as a vote towards the first choice candidate.
+
+B.    After any round, if any candidate receives a majority of votes from the continuing ballots, that candidate shall be declared the winner.
+
+C.    If no candidate receives a majority, the candidate receiving the fewest number of votes shall be eliminated.
+
+D.    Every ballot counting towards the eliminated candidate shall be advanced to the next-ranked continuing candidate. All the continuing ballots for all continuing candidates shall be counted again in a new round. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.050 Ties.
+
+In the event that two or more candidates tie for the fewest number of votes, the candidate to eliminate shall be chosen by lot. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.060 Elimination of More Than One Candidate.
+
+During the elimination stage of any round, in the event that any candidate has more votes than the combined vote total of all candidates with fewer votes, all the candidates with fewer votes shall be eliminated simultaneously, and those ballots advanced to the next-ranked continuing candidate. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.070 Skipped Rankings.
+
+In the first or any round, in the event that any ballot reaches a ranking with no candidate indicated, that ballot shall immediately be advanced to the next ranking. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.080 Undervotes, Overvotes, and Exhausted Ballots.
+
+After each round, any ballot that is not continuing is either an undervote, overvote, or exhausted ballot. Any ballot that has been declared an undervote, overvote, or exhausted shall remain so and shall not count towards any candidate in that round or in subsequent rounds. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.090 Reports.
+
+The following reports shall be produced for public review.
+
+A.    The "summary report" for a contest shall mean a report that lists the candidate vote totals in each round, and the cumulative numbers of undervotes, overvotes, and exhausted ballots in each round.
+
+B.    The "ballot image report" for a contest shall mean a report that lists, for each ballot, the candidate or candidates indicated at each ranking, the precinct of the ballot, and whether the ballot was cast by a vote-by-mail ballot. In the report, the ballots shall be listed in an order that does not permit the order in which they were cast in each precinct to be reconstructed.
+
+C.    The "comprehensive report" for a contest shall mean a report that lists the vote totals in the summary report by precinct. The report shall list, for each round, the number of ballots cast in each precinct that:
+
+1.    were tallied as votes for each candidate in that round,
+
+2.    have been declared undervotes,
+
+3.    have been declared overvotes, cumulatively for all previous rounds and inclusive of the reported round of tabulation, and
+
+4.    have been declared exhausted cumulatively for all previous rounds and inclusive of the reported round of tabulation.
+
+D.    Mode and manner of release. Preliminary versions of the summary report and ballot image report shall be made available as soon as possible after the commencement of the canvass of votes cast. The summary report, ballot image report, comprehensive report, and preliminary versions of the summary report and ballot image report shall be made available to the public during the canvass via the Internet and by other means. The ballot image report and preliminary versions of the ballot image report shall be made available in a plain text electronic format. In any case, preliminary versions of these reports shall be made available to the public prior to the commencement of the manual tally. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.100 Manual Tally.
+
+A.    A preliminary version of the comprehensive report shall be made available to the public prior to the selection of precincts for the public one percent manual tally, as provided by state law.
+
+B.    After each round of the manual tally, the second and third choice votes shall be assigned based of the candidate totals in the summary round-by-round report for the entire contest. (Ord. 7038-NS § 1, 5/20/08)
+
+2.14.110 Election Procedures if Ranked Choice Voting is Not Used.
+
+In the event that the City is unable to use ranked choice voting, the City shall hold a general election in November of each even numbered year and a run-off election, if necessary, in February immediately following the general election as provided for in the charter. (Ord. 7038-NS § 1, 5/20/08)
+
