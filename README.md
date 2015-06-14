@@ -14,8 +14,12 @@ of auditing RCV elections.
 Links to Statutes
 -----------------
 
-* San Francisco
-  * [SF Charter][sf_charter] (see Article XIII, Sec. 13.102)
+* Oakland, CA
+  * [Oakland Charter][oakland_charter] (See Article XI, Sec. 1105. Ranked
+    Choice Voting.)
+* San Francisco, CA
+  * [SF Charter][sf_charter] (See Article XIII, Sec. 13.102. Instant Runoff
+    Elections.)
 
 
 License
@@ -33,6 +37,7 @@ Contributors
 
 [Coq]: https://coq.inria.fr/
 [irv]: https://en.wikipedia.org/wiki/Instant-runoff_voting
+[oakland_charter]: https://www.municode.com/library/ca/oakland/codes/code_of_ordinances?nodeId=THCHOA
 [rcv]: https://en.wikipedia.org/wiki/Ranked_Choice_Voting
 [sf_charter]: http://www.amlegal.com/library/ca/sfrancisco.shtml
 [stv]: https://en.wikipedia.org/wiki/Single_transferable_vote
