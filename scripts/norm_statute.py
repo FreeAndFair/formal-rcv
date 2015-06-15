@@ -25,6 +25,11 @@ def collapse_spaces(line):
     return " ".join(line.split())
 
 
+def normalize_para(para):
+    """Normalize a single paragraph."""
+    return textwrap.fill(collapse_spaces(para), width=WIDTH)
+
+
 def main(argv):
     args = argv[1:]
     path = args[0]
@@ -33,7 +38,7 @@ def main(argv):
         text = f.read()
 
     paras = text.split("\n\n")
-    paras = [textwrap.fill(collapse_spaces(para), width=WIDTH) for para in paras if para.strip()]
+    paras = [normalize_para(para) for para in paras if para.strip()]
     text = "\n\n".join(paras)
     # Ensure the file ends in a newline.
     text += "\n"

@@ -13,7 +13,8 @@ elections.
 The project will use [Coq][coq] for the formalization.
 
 This work will inform the work of IEEE's Voting System Standards Committee
-Working Group [VSSC 1622.6][vssc_1622_6] "Voting Methods Mathematical Models."
+(VSSC) Working Group [1622.6][vssc_1622_6], "Voting Methods Mathematical
+Models."
 
 
 Jurisdiction Sources
