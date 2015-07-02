@@ -62,9 +62,12 @@ Terms
 
 * **vote**.  The information capturing a voter's selections for a particular
   contest after the marks in the corresponding physical vote have been
-  interpreted as references to particular candidates or choices.  In this
-  sense, the input to a vote tabulation algorithm are the "votes" rather
-  than the "physical votes."
+  interpreted as references to particular candidates or choices.  For
+  example, a ballot scanner may be responsible for converting physical votes
+  to votes, and a post-election audit may be responsible for ensuring that
+  this was done correctly.  Additionally, it is typically the votes rather
+  than the physical votes that serve as the input to vote tabulation
+  algorithm or software (e.g. as in this project).
 
 
 [DRE_voting_machine]: https://en.wikipedia.org/wiki/DRE_voting_machine
