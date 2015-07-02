@@ -1,15 +1,15 @@
 Glossary
 ========
 
-This document provides definitions of a number of election and RCV-related
-terms for the purposes of this project.  As much as possible, the names of
-functions, variables, etc. in this project will be chosen to be consistent
-with these definitions.
+This document is a convenient guide to the meaning of various election
+terms as we use them throughout this project.
 
-These definitions should be taken as informative rather than normative.
-However, they should be consistent with and descriptive of the normative
-definitions that we spell out elsewhere in the project using a formal
-language.
+These definitions should be taken as _informative_ rather than normative.
+The normative definitions are spelled out elsewhere in the project using
+a formal language.  Nevertheless, the definitions here are consistent with
+and descriptive of the normative definitions.  Also, as much as possible,
+we choose names in the formalized parts of this project (e.g. function
+names, variable names, etc) to be consistent with this glossary.
 
 Note that the statutes of individual jurisdictions may assign different
 meanings to these terms.  For example, in the first sentence of
@@ -29,13 +29,14 @@ Terms
   ballot is one or more paper cards.  For example, the City and County of
   San Francisco sometimes has a 5-card ballot.  In the case of a
   [DRE voting machine][DRE_voting_machine] without a paper trail, the ballot
-  can be a data structure stored in an electronic medium.
+  can be a data structure stored in an electronic medium, like a region
+  of memory in a memory cartridge.
 
 * **candidate**.  A person running for a particular contest.
 
 * **contest**.  A single race in an election, for example a race for a
   position like Governor or Mayor or a yes-no race like a ballot measure.
-  A contest can have multiple winners like in the case of at-large School
+  A contest can have multiple winners like in the case of an at-large School
   Board race for multiple seats.
 
 * **exhausted vote**.  A vote counting towards no candidate and that
