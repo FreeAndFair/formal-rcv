@@ -13,10 +13,10 @@ language.
 
 Note that the statutes of individual jurisdictions may assign different
 meanings to these terms.  For example, San Francisco Charter
-[Section 13.102(a)][SF_Charter_13_102_a] takes "ballot" to mean "vote"
+[Section 13.102.a][SF_Charter_13_102_a] takes "ballot" to mean "vote"
 in the sense of this glossary.  For this reason, the project strives to
 distinguish visually when a term is being used with the global project
-meaning as opposed to the the meaning as assigned by the statute being
+meaning as opposed to the meaning as assigned by the statute being
 discussed.
 
 
@@ -36,7 +36,7 @@ Terms
   at-large School Board race for multiple seats.
 
 * **exhausted vote**.  A vote counting towards no candidate and that
-  (1) is not an overvote, and (2) counted towards a candidate in a previous
+  (1) is not an overvote, and (2) did count towards a candidate in a previous
   round.
 
 * **overvote**.  A vote counting towards no candidate because the
