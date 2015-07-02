@@ -23,13 +23,13 @@ Section election_spec.
   Section ballot_properties.
     (**  At any given time in a tabulation, some collection of candidates
          have been eliminated.  The following definitions are all defined
-         with repsect to the candidates that have been eliminated thus far.
+         with respect to the candidates that have been eliminated thus far.
          The abstract 'eliminated' predicate indicates which candidates are
          already eliminated.
       *)
     Variable eliminated : candidate -> Prop.
 
-    (**  One condition for a ballot to be exausted is that it
+    (**  One condition for a ballot to be exhausted is that it
          all the candidates it selects have already been eliminated.
          This vacuously covers the case of an empty ballot.
      *)  
@@ -58,17 +58,17 @@ Section election_spec.
       exists r, next_ranking b r /\
          exists c1 c2, In c1 r /\ In c2 r /\ c1 <> c2.
 
-    (**  A ballot is exausted if it selects no vaiable candidates
+    (**  A ballot is exhausted if it selects no vaiable candidates
          or is an overvote 
       *)
-    Definition exausted_ballot (b:ballot) :=
+    Definition exhausted_ballot (b:ballot) :=
       no_viable_candidates b \/ overvote b.
 
     Definition continuing_ballot (b:ballot) :=
-      ~exausted_ballot b.
+      ~exhausted_ballot b.
 
  
-    (**  A ballot selectes a particular candidate iff it is a
+    (**  A ballot selects a particular candidate iff it is a
          continuing ballot and its next ranking contains that
          candidate.
       *)
@@ -108,7 +108,7 @@ Section election_spec.
 
 (**
 What to do if a ballot has multiple choices for a rank, but all
-have already been eliminated?  Shall the ballot be deemed exausted,
+have already been eliminated?  Shall the ballot be deemed exhausted,
 or will we continue to consider later choices?
 
 E.g.,
