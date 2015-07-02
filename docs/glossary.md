@@ -56,8 +56,8 @@ Terms
 
 * **round**.  A sequential stage of the vote tabulation for an RCV contest.
 
-* **undervote**.  A vote counting towards no candidate and that is
-  (1) not an overvote, and (2) did not count towards a candidate in a
+* **undervote**.  A vote counting towards no candidate and that
+  (1) is not an overvote, and (2) did not count towards a candidate in a
   previous round.
 
 * **vote**.  The information capturing a voter's selections for a particular
