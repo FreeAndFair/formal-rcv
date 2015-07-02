@@ -30,10 +30,12 @@ Terms
   [DRE voting machine][DRE_voting_machine] without a paper trail, the ballot
   can be a data structure stored in an electronic medium.
 
+* **candidate**.  A person running for a particular contest.
+
 * **contest**.  A single race in an election, for example a race for a
-  position like Governor or Mayor or a non-candidate race like a ballot
-  measure.  A contest can have multiple winners like in the case of
-  at-large School Board race for multiple seats.
+  position like Governor or Mayor or a yes-no race like a ballot measure.
+  A contest can have multiple winners like in the case of at-large School
+  Board race for multiple seats.
 
 * **exhausted vote**.  A vote counting towards no candidate and that
   (1) is not an overvote, and (2) did count towards a candidate in a previous
