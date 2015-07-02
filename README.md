@@ -17,6 +17,15 @@ This work will inform the work of IEEE's Voting System Standards Committee
 Models."
 
 
+Contents
+--------
+
+* [Glossary](docs/glossary.md)
+* [Statutes](#jurisdiction-sources)
+* [License](#license)
+* [Contributors](#contributors)
+
+
 Jurisdiction Sources
 --------------------
 
