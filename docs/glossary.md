@@ -12,9 +12,10 @@ definitions that we spell out elsewhere in the project using a formal
 language.
 
 Note that the statutes of individual jurisdictions may assign different
-meanings to these terms.  For example, San Francisco Charter
-[Section 13.102.a][SF_Charter_13_102_a] takes "ballot" to mean "vote"
-in the sense of this glossary.  For this reason, the project strives to
+meanings to these terms.  For example, in the first sentence of
+[Section 13.102.a][SF_Charter_13_102_a] of the San Francisco Charter,
+the Charter uses "ballot" as meaning "vote" in the sense of this glossary.
+For this reason, the project strives to
 distinguish visually when a term is being used with the global project
 meaning as opposed to the meaning as assigned by the statute being
 discussed.
