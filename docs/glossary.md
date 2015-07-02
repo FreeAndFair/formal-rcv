@@ -18,12 +18,12 @@ discussed.
 Terms
 -----
 
-* **ballot**.  An object that stores all of a voter's selections for an
-  election.  In particular, a ballot usually has selections for multiple
-  contests.  Typically, a ballot is one or more paper cards.  For example,
-  San Francisco sometimes has a 5-card ballot.  However, in the case of a
-  [DRE voting machine][DRE_voting_machine] without a paper trail, the
-  ballot can be a data structure stored in an electronic medium.
+* **ballot**.  An object on which a voter can mark or save their votes
+  for an election and then subsequently cast.  Frequently, a ballot is one
+  or more paper cards.  For example, the City and County of San Francisco
+  sometimes has a 5-card ballot.  In the case of a
+  [DRE voting machine][DRE_voting_machine] without a paper trail, the ballot
+  can be a data structure stored in an electronic medium.
 
 * **contest**.
 
@@ -31,11 +31,17 @@ Terms
 
 * **overvote**.
 
-* **round**.
+* **round**.  A sequential stage of the vote tabulation for an RCV contest.
 
 * **undervote**.
 
-* **vote**.
+* **vote**.  The physical or electronic markings that contain a
+  voter's selections cast for a single contest in an election.  For example,
+  in the case of a "vote for one" contest, a vote could be a bubbled-in
+  oval or, in the case of a vote for a write-in candidate, a bubbled-in
+  oval in conjunction with a hand-written name.  In the case of an RCV
+  contest, a vote would be the collection of markings indicating a voter's
+  first, second, and third choices, etc.
 
 * **vote record**.
 
