@@ -8,12 +8,14 @@ Section election_spec.
    *)
   Variable candidate:Set.
 
-  (** Voters cast ballots, which consist of a sequence of rank positions.
+  (** Voters cast votes, which consist of a sequence of rank positions.
       For each rank position, a voter selects 0 or more candidates.
-      A properly cast vote will have at least one candidate selected;
-      and no more than one candidate selected for each rank.  However,
-      voters do not always follow the rules, and may leave some ranks
-      blank, or select more than one candidate for a given rank.
+      A properly cast vote will have (1) no more than one candidate selected
+      at each rank, (2) each candidate selected at most once, and (3) no
+      candidate selected at a rank position later than a rank position with
+      zero candidates.  However, voters do not always follow the rules;
+      voters may select more than one candidate at a given rank, may select
+      the same candidate more than once, or may skip rankings.
 
       The vote tabulation system must handle these cases.
    *)
@@ -21,7 +23,7 @@ Section election_spec.
   Definition ballot := list rankSelection.
   
   Section ballot_properties.
-    (**  At any given time in a tabulation, some collection of candidates
+    (**  At any given round of a tabulation, some collection of candidates
          have been eliminated.  The following definitions are all defined
          with respect to the candidates that have been eliminated thus far.
          The abstract 'eliminated' predicate indicates which candidates are
