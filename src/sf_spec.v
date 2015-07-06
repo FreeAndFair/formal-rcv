@@ -8,12 +8,14 @@ Section election_spec.
    *)
   Variable candidate:Set.
 
-  (** Voters cast ballots, which consist of a sequence of rank positions.
+  (** Voters cast votes, which consist of a sequence of rank positions.
       For each rank position, a voter selects 0 or more candidates.
-      A properly cast vote will have at least one candidate selected;
-      and no more than one candidate selected for each rank.  However,
-      voters do not always follow the rules, and may leave some ranks
-      blank, or select more than one candidate for a given rank.
+      A properly cast vote will have (1) no more than one candidate selected
+      at each rank, (2) each candidate selected at most once, and (3) no
+      candidate selected at a rank position later than a rank position with
+      zero candidates.  However, voters do not always follow the rules;
+      voters may select more than one candidate at a given rank, may select
+      the same candidate more than once, or may skip rankings.
 
       The vote tabulation system must handle these cases.
    *)
@@ -21,15 +23,15 @@ Section election_spec.
   Definition ballot := list rankSelection.
   
   Section ballot_properties.
-    (**  At any given time in a tabulation, some collection of candidates
+    (**  At any given round of a tabulation, some collection of candidates
          have been eliminated.  The following definitions are all defined
-         with repsect to the candidates that have been eliminated thus far.
+         with respect to the candidates that have been eliminated thus far.
          The abstract 'eliminated' predicate indicates which candidates are
          already eliminated.
       *)
     Variable eliminated : candidate -> Prop.
 
-    (**  One condition for a ballot to be exausted is that it
+    (**  One condition for a ballot to be exhausted is that it
          all the candidates it selects have already been eliminated.
          This vacuously covers the case of an empty ballot.
      *)  
@@ -58,17 +60,17 @@ Section election_spec.
       exists r, next_ranking b r /\
          exists c1 c2, In c1 r /\ In c2 r /\ c1 <> c2.
 
-    (**  A ballot is exausted if it selects no vaiable candidates
+    (**  A ballot is exhausted if it selects no vaiable candidates
          or is an overvote 
       *)
-    Definition exausted_ballot (b:ballot) :=
+    Definition exhausted_ballot (b:ballot) :=
       no_viable_candidates b \/ overvote b.
 
     Definition continuing_ballot (b:ballot) :=
-      ~exausted_ballot b.
+      ~exhausted_ballot b.
 
  
-    (**  A ballot selectes a particular candidate iff it is a
+    (**  A ballot selects a particular candidate iff it is a
          continuing ballot and its next ranking contains that
          candidate.
       *)
@@ -108,7 +110,7 @@ Section election_spec.
 
 (**
 What to do if a ballot has multiple choices for a rank, but all
-have already been eliminated?  Shall the ballot be deemed exausted,
+have already been eliminated?  Shall the ballot be deemed exhausted,
 or will we continue to consider later choices?
 
 E.g.,
