@@ -38,10 +38,9 @@ Definition no_viable_candidates (rec : record) (bal : ballot) : bool :=
 Fixpoint next_ranking (rec : record) (bal : ballot) : option (candidate * ballot) :=
 match bal with
 | [] :: t => next_ranking rec t
-| h :: t => match h with 
-            | [h'] => if (eliminated rec h') then next_ranking rec t else Some (h', bal)
-            | _ => None
-            end
+| (h :: l) :: t => if (forallb (eq_dec h) l) then 
+                     if (eliminated rec h) then next_ranking rec t else Some (h, bal)
+                   else  None
 | [] => None
 end.
 
