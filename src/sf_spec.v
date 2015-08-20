@@ -21,6 +21,10 @@ Section election_spec.
    *)
   Definition rankSelection := list candidate.
   Definition ballot := list rankSelection.
+  Definition election := list ballot.
+  Definition contestants := list candidate.
+  Variable tiebreak : list candidate -> candidate -> Prop.
+
   
   Section ballot_properties.
     (**  At any given round of a tabulation, some collection of candidates
@@ -29,6 +33,7 @@ Section election_spec.
          The abstract 'eliminated' predicate indicates which candidates are
          already eliminated.
       *)
+
     Variable eliminated : candidate -> Prop.
 
     (**  One condition for a ballot to be exhausted is that it
@@ -78,8 +83,75 @@ Section election_spec.
       continuing_ballot b /\
       exists r, next_ranking b r /\ In c r.
 
+
+
+    (** If a candidate receives a majority of the first choices, that
+candidate shall be declared elected.*)
+
+    Inductive first_choices (c : candidate) : election ->  nat -> Prop :=
+    | first_choices_nil : first_choices c nil 0
+    | first_choices_selected : forall h t n', selected_candidate h c ->
+                                              first_choices c t n' ->
+                                              first_choices c (h::t) (S n')
+    | first_choices_not_selected : forall h t n, ~selected_candidate h c ->
+                                                 first_choices c t n ->
+                                                 first_choices c (h::t) n.
+
+
+    (* this may not even be useful *)
+   
+
+    Definition all_candidates (e : election) (c : list candidate) :=
+      NoDup c /\ Forall (Forall (Forall (fun x => In x c))) e.
+    
+    Definition most_votes (e : election) (winner : candidate) :=
+      forall candidates, all_candidates e candidates ->
+                         Forall 
+                           (fun candidate => (exists n n_winner, (first_choices candidate e n) ->
+                                                                 (first_choices winner e n_winner) ->
+                                                                 n < n_winner) \/
+                                             candidate = winner) candidates. 
+    
+    Inductive total_selected : election -> nat -> Prop :=
+    | total_nil : total_selected nil 0
+    | total_continuing : forall b e' n, continuing_ballot b ->
+                                        total_selected e' n ->
+                                        total_selected (b :: e') (S n)
+    | total_exhausted : forall b e' n, exhausted_ballot b ->
+                                       total_selected e' n ->
+                                       total_selected (b :: e') (n).
+
+    Definition majority (e : election) (winner : candidate) :=
+      forall total_votes winner_votes, 
+        (total_selected e total_votes) ->
+        first_choices winner e winner_votes ->
+        (winner_votes * 2) > total_votes.
+
+    (** If no candidate receives a
+majority, the candidate who received the fewest first choices shall be
+eliminated and each vote cast for that candidate shall be transferred to
+the next ranked candidate on that voter's ballot. *)
+
+    Definition no_majority (e : election) :=
+      forall c, 
+        all_candidates e c ->
+        Forall (fun candidate => ~majority e candidate) c.
+
+    Definition possibly_eliminated_candidates 
+               (e : election) (losers : list candidate) :=
+      forall c, all_candidates e c ->
+      exists n_loser, (Forall (fun cd => first_choices cd e n_loser) losers) /\ 
+                      Forall (fun cd => exists n, first_choices cd e n ->
+                                                  n_loser < n \/ 
+                                                  In cd losers) c. 
+
+    Definition eliminated_candidate (e : election) (loser : candidate) :=
+      forall losers, 
+        possibly_eliminated_candidates e losers /\ tiebreak losers loser. 
+    
+
     (**  Every ballot has at most one next ranking.
-      *)
+     *)
     Lemma next_ranking_unique (b:ballot) r1 r2 :
       next_ranking b r1 ->
       next_ranking b r2 ->
@@ -92,7 +164,7 @@ Section election_spec.
     Qed.
 
     (**  Every ballot selects at most one candidate.
-      *)
+     *)
     Lemma selected_candidate_unique (b:ballot) (c1 c2:candidate) :
       selected_candidate b c1 ->
       selected_candidate b c2 ->
@@ -108,7 +180,7 @@ Section election_spec.
       red; firstorder.
     Qed.
 
-(**
+    (**
 What to do if a ballot has multiple choices for a rank, but all
 have already been eliminated?  Shall the ballot be deemed exhausted,
 or will we continue to consider later choices?
@@ -175,7 +247,25 @@ The formal specification above counts this situation as a vote for D.
     Qed.
 
   End ballot_properties.
-End election_spec.
+
+  Definition update_eliminated 
+             (eliminated : candidate -> Prop) (c : candidate) (eliminated' : candidate -> Prop) 
+    :=
+      (forall cs, (eliminated cs = eliminated' cs \/ cs = c)) /\ eliminated' c.
+  
+  Inductive winner : 
+    election -> (candidate -> Prop) -> candidate -> Prop :=
+  | winner_now : forall election winning_candidate eliminated, 
+      majority eliminated election winning_candidate ->
+      winner election eliminated winning_candidate
+  | winner_elimination : forall election winning_candidate eliminated loser eliminated',
+      no_majority eliminated election  ->
+      eliminated_candidate eliminated election loser ->
+      update_eliminated eliminated loser eliminated' ->
+      winner election eliminated' winning_candidate ->
+      winner election eliminated winning_candidate.      
+
+End election_spec. 
 
 (**
 SAN FRANCISCO CHARTER
