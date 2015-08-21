@@ -667,8 +667,79 @@ induction l; intros.
 Grab Existential Variables. apply 0. apply c. (*ugh*)
 Qed.
    
-  
-        
+Lemma opt_eq_dec : forall A,
+(forall (a b : A), {a = b} + {a <> b}) ->
+forall (a b : option A), {a = b} + {a <> b}.
+Proof.
+intros.
+destruct a, b; auto.
+specialize (X a a0). destruct X. subst. auto. right.
+intro. inv H. auto.
+right. intro. congruence.
+right. congruence.
+Qed.
+
+Lemma opt_eq_dec_cand : 
+forall (a b : option candidate), {a = b} + {a <> b}.
+Proof.
+apply opt_eq_dec. apply rel_dec_p.
+Qed.
+
+Lemma NoDup_In_fst :
+forall A B l (a :A) (b :B) c,
+NoDup (fst (split l)) ->
+In (a, b) l ->
+In (a, c) l ->
+b = c.
+Proof.
+induction l; intros.
+- inv H0.
+- simpl in *.
+  destruct (split l) eqn:?.
+  destruct a. intuition; try congruence.
+  + simpl in *. inv H2. inv H. apply in_split_l in H0. simpl in H0. 
+    rewrite Heqp in *. intuition.
+  + simpl in *. inv H. inv H0. 
+    apply in_split_l in H2. simpl in*. rewrite Heqp in *.
+    intuition.
+  + eapply IHl; eauto. simpl. simpl in H. inv H. auto.
+Qed.
+
+Lemma tab_inc_s : forall cd ct l running running' cr,
+NoDup (fst (split running)) ->
+NoDup (fst (split running')) ->
+In (cd, S ct)
+   (sf_imp.tabulate'' candidate reldec_candidate l running') ->
+In (cd, cr) running ->
+In (cd, (S cr)) running' ->
+In (cd, ct) (sf_imp.tabulate'' candidate reldec_candidate l running).
+Proof.
+induction l; intros.
+- simpl in *. 
+  assert (cr = ct).
+  eapply NoDup_In_fst in H3. instantiate (1:=S ct) in H3. congruence.
+  auto. auto. subst. auto.
+- simpl in *.
+  destruct a. 
+  + destruct (rel_dec_p cd c).
+    * subst. eapply IHl.
+      apply increment_nodup. auto. 
+      apply increment_nodup. apply H0.
+      eauto. 
+      eapply increment_spec in H2; eauto.
+      eapply increment_spec in H3; eauto.
+    * eapply increment_neq in H2; eauto.
+      eapply increment_neq in H3; eauto.
+      eapply IHl.
+      apply increment_nodup. auto.
+      apply increment_nodup. apply H0.
+      apply H1.
+      eauto.
+      eauto.
+  + eapply IHl; eauto.
+Qed.
+
+
 Lemma tabulate''_first_choices : forall ef cd ct es running r
 (NODUP : NoDup (fst (split running))),
 In (cd, ct) (sf_imp.tabulate'' candidate _ 
@@ -692,28 +763,22 @@ induction ef; intros.
      eapply first_choices_perm; eauto. clear H2.
      apply next_ranking_selected in Heqo.
      destruct (rel_dec_p c cd). 
-     * subst. destruct ct.
-       clear - H NODUP.
-       exfalso. 
-       eapply (tabulate_not_0 _ _ _ _ _ _ _ H).
-       constructor. auto. 
+     * subst. 
+       { destruct ct.
+         - clear - H NODUP.
+           exfalso. 
+           eapply (tabulate_not_0 _ _ _ _ _ _ _ H).
+         - constructor. auto. 
+           eapply IHef; eauto.
+           rewrite Heqp. simpl. 
+           eapply tab_inc_s. auto.
+           apply increment_nodup. 
+           eauto.
+           eauto.
        
-(*       destruct (in_dec _ (Some cd) (fst (sf_imp.option_split
-           (map (sf_imp.next_ranking candidate reldec_candidate r) ef)))). (map (sf_imp.next_ranking candidate _ r) (es ++ ef))).*)
-       eapply IHef; eauto.
-       rewrite Heqp. simpl. 
        
 
-Lemma tab_inc_s : forall cd ct l running,
-NoDup (fst (split running)) ->
-In (cd, S ct)
-        (sf_imp.tabulate'' candidate reldec_candidate l
-           (sf_imp.increment candidate reldec_candidate running cd)) ->
-   In (cd, ct) (sf_imp.tabulate'' candidate reldec_candidate l running).
-Proof.
-induction l; intros.
-+ simpl in *. 
-
+    
 Lemma inc_spec_rev : forall running cd ct,
 In (cd, S ct) (sf_imp.increment candidate reldec_candidate running cd) ->
 In (cd, ct) running.

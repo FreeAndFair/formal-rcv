@@ -59,13 +59,14 @@ match r with
 end.
 
 
-Fixpoint tabulate'' (rs : list candidate) lc: list (candidate * nat) :=
+Fixpoint tabulate'' (rs : list (option candidate)) lc: list (candidate * nat) :=
 match rs with
-| h :: t => tabulate'' t (increment lc h)
+| (Some h) :: t => tabulate'' t (increment lc h)
+| None :: t => tabulate'' t lc
 | nil => lc
 end.
 
-Definition tabulate' (rs : list candidate) :=
+Definition tabulate' (rs : list (option candidate)) :=
 tabulate'' rs nil.
 
 Definition cnlt (a b : (candidate * nat)) : bool :=
@@ -75,7 +76,7 @@ end.
 
 Fixpoint insert {A} (cmp : A -> A -> bool) (i : A) (l : list A) :=
 match l with
-| h :: t => if (cmp h i) then i :: t else h :: (insert cmp i t)
+| h :: t => if (cmp i h) then i :: l else h :: (insert cmp i t)
 | _ => [i]
 end.
 
@@ -93,12 +94,19 @@ Definition election := list ballot.
 (** Here we count the number of votes for each candidate, returning a sorted
     list of (candidate, number of votes). It also returns an election, where any
     exhausted ballots are removed. *)
+Fixpoint option_split {A B : Type} (l : list (option (A * B))) :=
+match l with
+| nil => (nil, nil)
+| (Some (a, b)) :: t => let (l1, l2) := option_split t in ((Some a :: l1), (Some b :: l2))
+| None :: t => let (l1, l2) := option_split t in ((None :: l1), ( None :: l2))
+end.
+
 Definition tabulate (rec : record) (elect : election) : ((list (candidate * nat) * election)) :=
-let get_candidates := drop_none (map (next_ranking rec) elect) in
-let (next_ranks, next_election) := split (get_candidates) in
+let get_candidates := (map (next_ranking rec) elect) in
+let (next_ranks, next_election) := option_split (get_candidates) in
 let counts := tabulate' next_ranks in
 let sorted_ranks := insertionsort cnlt counts in
-(sorted_ranks, next_election).
+(sorted_ranks, drop_none next_election).
 
 Definition gtb_nat (a b : nat) : bool:=
 match (nat_compare a b) with
@@ -171,7 +179,7 @@ match fuel with
 | _ => (None, rec)
 end.
 
-Fixpoint run_election elect :=
+Definition run_election elect :=
 run_election' elect nil (length elect).
 
 
@@ -205,11 +213,19 @@ Definition ballot3 : (ballot nat) := ballot1.
 Definition ballot4 := 
 [[0]; [1]].
 
+Fixpoint repeat_append {A : Type} (l : list A) (n : nat) : list A :=
+match n with 
+| O => nil
+| S n' => l ++ (repeat_append l n')
+end.
+
 Definition election1 :=
 [ballot1;
  ballot2;
  ballot3;
  ballot4].
+
+Definition election2 := repeat_append election1 100000.
 
 Compute (nat_tabulate nil (election1)).
 
@@ -218,9 +234,6 @@ match l with
 | h :: t => Some h
 | _ => None
 end.
-
-
-Compute (run_election nat _ tiebreak election1).
 
 
 
