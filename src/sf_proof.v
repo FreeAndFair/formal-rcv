@@ -740,6 +740,149 @@ induction l; intros.
 Qed.
 
 
+Ltac copy H :=
+match goal with 
+[ H : ?P |- _] => assert P by exact H end.
+
+Lemma increment_neq' : forall running cd ct  c,
+In (cd, ct) (sf_imp.increment candidate reldec_candidate running c) ->
+c <> cd ->
+In (cd, ct) running.
+Proof.
+induction running; intros.
+- simpl in H. intuition. congruence.
+- simpl in *. destruct a.
+  + destruct (eq_dec c0 c) eqn:?.
+    apply rel_dec_correct in Heqb. subst.
+    simpl in *. intuition. inv H1. intuition.
+    simpl in *. intuition.
+    right. eapply IHrunning; eauto.
+Qed.
+
+Lemma tabulate''_same : forall cd l running running' cr ct,
+NoDup (fst (split running)) ->
+NoDup (fst (split running')) ->
+In (cd, cr) running ->
+In (cd, cr) running' ->
+In (cd, ct) (sf_imp.tabulate'' candidate reldec_candidate l running) ->
+In (cd, ct) (sf_imp.tabulate'' candidate reldec_candidate l running').
+Proof.
+induction l; intros.
+- simpl in *. 
+  assert (cr = ct).
+  eapply NoDup_In_fst. apply H.
+  apply H1. apply H3. subst.
+  auto.
+- simpl in *.
+  destruct a.
+  + destruct (rel_dec_p cd c).
+    * eapply IHl.
+      apply increment_nodup. apply H.
+      apply increment_nodup. auto. 
+      subst.
+      eapply increment_spec in H1. apply H1.
+      auto. auto.
+      subst. eapply increment_spec in H2; eauto.
+      eauto.
+    * eapply IHl.
+      apply increment_nodup. apply H.
+      apply increment_nodup. auto.
+      eapply increment_neq in n. apply n. eauto.
+      eapply increment_neq in n.
+      eauto. auto.
+      eauto.
+  + eapply IHl; eauto.
+Qed.
+
+Lemma tabulate''_same_notin : forall cd ct l running running',
+NoDup (fst (split running)) ->
+NoDup (fst (split running')) ->
+~In cd (fst (split running)) ->
+~In cd (fst (split running')) ->
+In (cd, ct) (sf_imp.tabulate'' candidate reldec_candidate l running) ->
+In (cd, ct) (sf_imp.tabulate'' candidate reldec_candidate l running').
+Proof.
+induction l; intros.
+- simpl in *. intuition. 
+  apply in_split_l in H3. simpl in H3. intuition.
+- simpl in *.
+  destruct a; try solve [eapply IHl; eauto].
+  destruct (rel_dec_p cd c).
+  + subst. eapply increment_spec in H1; eauto.
+    eapply increment_spec in H2; eauto.
+    eapply (tabulate''_same _ _ _ _ _ _ _ _ _ H2).
+    eauto. 
+  + eapply IHl. apply H.
+    apply increment_nodup. auto. auto. apply increment_nodup'; eauto.
+    eapply IHl in H3. eauto. 
+    apply increment_nodup. auto. auto. apply increment_nodup'; eauto.  
+    auto. Grab Existential Variables. auto.
+    apply increment_nodup. auto. apply increment_nodup. auto.
+Qed.
+
+Lemma tab_inc_s_l :
+forall l cd ct running,
+In (cd, S ct) (sf_imp.tabulate'' candidate reldec_candidate l
+               (sf_imp.increment candidate reldec_candidate running cd)) ->
+~ In cd (fst (split running)) ->
+NoDup (fst (split running)) ->
+In (Some cd) l ->
+In (cd, ct) (sf_imp.tabulate'' candidate reldec_candidate l running).
+Proof.
+induction l; intros.
+- inv H2.
+- simpl in *. destruct a.
+  destruct (rel_dec_p cd c). 
+  + subst. clear H2.
+    simpl in *. eapply increment_spec in H0; auto.
+    copy H0.
+    eapply increment_spec in H0; auto.
+    eapply tab_inc_s. apply increment_nodup. auto. apply increment_nodup.
+    apply increment_nodup. eauto. eauto. eauto. eauto.
+    apply increment_nodup. auto. 
+  + destruct H2. congruence. 
+    eapply tabulate''_same_notin.
+    eauto. apply increment_nodup. auto.
+    auto.
+    apply increment_nodup'; auto.
+    eapply IHl; eauto.
+    eapply (tabulate''_same) in H.
+    apply H. apply increment_nodup. apply increment_nodup.
+    auto. apply increment_nodup. auto.
+    apply increment_neq; auto. eapply increment_spec in H0; eauto.
+    eapply increment_spec in H0; eauto.
+  + intuition. congruence.
+Qed.
+
+Lemma tabulate_not_in_l :
+forall l cd ct running,
+NoDup (fst (split running)) ->
+In (cd, ct) running ->
+~In (Some cd) l ->
+In (cd, ct) (sf_imp.tabulate'' candidate reldec_candidate l running).
+Proof.
+induction l; intros.
+- simpl. auto.
+- simpl in *.
+  destruct a; intuition; try congruence.
+  eapply IHl; eauto. apply increment_nodup. auto.
+  apply increment_neq; auto. intuition. subst. auto.
+Qed.
+
+Lemma tabulate_nodup :
+forall l running,
+NoDup (fst (split running)) -> 
+NoDup (fst (split (sf_imp.tabulate'' candidate reldec_candidate l running))).
+Proof.
+induction l; intros.
+- simpl.  auto.
+- simpl in *.
+  destruct a.
+  + apply IHl. apply increment_nodup; auto.
+  + apply IHl. auto.
+Qed.
+
+
 Lemma tabulate''_first_choices : forall ef cd ct es running r
 (NODUP : NoDup (fst (split running))),
 In (cd, ct) (sf_imp.tabulate'' candidate _ 
@@ -769,13 +912,50 @@ induction ef; intros.
            exfalso. 
            eapply (tabulate_not_0 _ _ _ _ _ _ _ H).
          - constructor. auto. 
-           eapply IHef; eauto.
-           rewrite Heqp. simpl. 
-           eapply tab_inc_s. auto.
-           apply increment_nodup. 
-           eauto.
-           eauto.
-       
+           destruct (in_dec rel_dec_p cd (fst (split running))).
+           + eapply IHef; eauto.
+             edestruct in_split. apply i.
+             eapply tab_inc_s; auto.
+             apply increment_nodup. eauto.
+             rewrite Heqp. simpl. eauto.
+             apply H2. eapply increment_spec in H2; eauto.
+           + destruct (in_dec opt_eq_dec_cand (Some cd) l).
+             * eapply IHef; eauto.
+               rewrite Heqp. simpl.
+               apply tab_inc_s_l; auto.
+             * copy n. eapply increment_spec in n; eauto.
+               eapply tabulate_not_in_l in n; eauto.
+               assert (1 = (S ct)). eapply NoDup_In_fst; [ | eauto | eauto ].
+               apply tabulate_nodup. apply increment_nodup. auto.
+               inv H3. change 0 with (0 + 0). 
+               apply first_choices_app. 
+               
+               
+               
+               SearchAbout In.
+
+eapply tabulate''_same.
+
+
+
+  apply nodup_in.
+  
+    eapply increment_neq';
+
+    simpl in *.
+    apply neg_rel_dec_correct in H0. unfold eq_dec in H. rewrite H0 in H.
+
+    eapply increment_neq.
+    assert (In (cd, 1) (sf_imp.increment candidate reldec_candidate running cd)).
+    eapply increment_spec; eauto.
+    eapply increment_neq in H3; eauto.
+    eapply tab_inc_s. apply increment_nodup.
+    auto.
+    apply increment_nodup. apply increment_nodup. eauto.
+    eauto. 
+    
+Check increment_spec.
+    eapply increment_spec in n.
        
 
     
