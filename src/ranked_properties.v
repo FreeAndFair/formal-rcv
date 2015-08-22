@@ -1,8 +1,5 @@
 Require Import Classical.
-Require Import Permutation.
 Require Import List.
-
-Open Scope list_scope.
 
 Section ranked_preference_voting_properties.
   Variable candidate:Type.
@@ -19,18 +16,16 @@ Section ranked_preference_voting_properties.
   Let ballot := list rankSelection.
   Let election := list ballot.
 
-  Variable wins_election : candidate -> election -> Prop.
-
   Definition rank_selects (c:candidate) (r:rankSelection) : Prop :=
     In c r /\ forall c', In c' r -> c = c'.
 
   Definition first_choice (c:candidate) (b:ballot) : Prop :=
     exists first_rank rest,
-      b = first_rank :: rest /\ 
+      b = first_rank :: rest /\
       rank_selects c first_rank.
 
   Inductive prefers (c1 c2:candidate) : ballot -> Prop :=
-  | prefers_first : forall b r, 
+  | prefers_first : forall b r,
                 rank_selects c1 r ->
                 prefers c1 c2 (r::b)
 
@@ -41,7 +36,7 @@ Section ranked_preference_voting_properties.
                 prefers c1 c2 b ->
                 prefers c1 c2 (r::b).
 
-  
+
   Lemma alternatives_exist :
     forall c:candidate, exists c', c <> c'.
   Proof.
@@ -64,7 +59,7 @@ Section ranked_preference_voting_properties.
       a ballot that prefers that candidate to every other candidate.
    *)
   Lemma first_choice_prefers c b :
-    first_choice c b <-> forall c2, c <> c2 -> prefers c c2 b.
+    first_choice c b <-> (forall c2, c <> c2 -> prefers c c2 b).
   Proof.
     split.
     * intros [r [b' [Heq Hrank]]] c2 Hc2. subst b.
@@ -94,14 +89,9 @@ Section ranked_preference_voting_properties.
   Definition majority_satisfies (P:ballot -> Prop) (e:election) :=
     exists n, count_votes P e n /\ 2*n > length e.
 
-  Definition majority_criterion : Prop :=
-    forall (c:candidate) (e:election),
-      majority_satisfies (first_choice c) e ->
-      wins_election c e.
-
   Definition prefers_group (group:list candidate) (b:ballot) : Prop :=
     forall cin cout,
-      In cin group -> 
+      In cin group ->
       ~In cout group ->
       prefers cin cout b.
 
@@ -109,54 +99,62 @@ Section ranked_preference_voting_properties.
     (exists c, In c group) /\
     (exists c, ~In c group).
 
-  Definition mutual_majority_criterion : Prop :=
-    forall (group:list candidate) (e:election),
-      nontrivial_grouping group ->
-      majority_satisfies (prefers_group group) e ->
-      exists c, In c group /\ wins_election c e.
-
-
-  Definition later_no_harm_criterion :=
-    forall (e:election) (b b':ballot) (c:candidate),
-      let e1 := ( b :: e ) in
-      let e2 := ( (b ++ b') :: e ) in
-      (exists r, In r b /\ rank_selects c r) ->
-      wins_election c e1 ->
-      wins_election c e2.
-
-
-  Definition wins_head_to_head_contest (cwins closes:candidate) (e:election) :=
+  Definition wins_pairwise_contest (cwins closes:candidate) (e:election) :=
     exists m n,
        count_votes (prefers cwins closes) e m /\
        count_votes (prefers closes cwins) e n /\
        m > n.
 
   Definition condorcet_winner (c:candidate) (e:election) :=
-    forall c', c <> c' -> wins_head_to_head_contest c c' e.
+    forall c', c <> c' -> wins_pairwise_contest c c' e.
 
   Definition condorcet_loser (c:candidate) (e:election) :=
-    forall c', c <> c' -> wins_head_to_head_contest c' c e.
+    forall c', c <> c' -> wins_pairwise_contest c' c e.
 
-  Definition condorcet_winner_criterion :=
-    forall c e, condorcet_winner c e -> wins_election c e.
 
-  Definition condorcet_loser_criterion :=
-    forall c e, condorcet_loser c e -> ~wins_election c e.
+  Section criteria_definitions.
+    Variable wins_election : candidate -> election -> Prop.
 
-  Definition monotonicity_raise_criterion :=
-    forall b1 b2 b3 c r e,
-      rank_selects c r ->
-      wins_election c ( (b1 ++ b2 ++ (r::nil) ++ b3) :: e) ->
-      wins_election c ( (b1 ++ (r::nil) ++ b2 ++ b3) :: e).
+    Definition majority_criterion : Prop :=
+      forall (c:candidate) (e:election),
+        majority_satisfies (first_choice c) e ->
+        wins_election c e.
 
-  Definition participation_criterion :=
-    forall b e c1 c2,
-      c1 <> c2 ->
-      prefers c1 c2 b ->
-      wins_election c1 e ->
-      wins_election c2 (b :: e) ->
-      False.
+    Definition mutual_majority_criterion : Prop :=
+      forall (group:list candidate) (e:election),
+        nontrivial_grouping group ->
+        majority_satisfies (prefers_group group) e ->
+        exists c, In c group /\ wins_election c e.
 
+    Definition later_no_harm_criterion :=
+      forall (e:election) (b b':ballot) (c:candidate),
+        let e1 := ( b :: e ) in
+        let e2 := ( (b ++ b') :: e ) in
+        (exists r, In r b /\ rank_selects c r) ->
+        wins_election c e1 ->
+        wins_election c e2.
+
+    Definition condorcet_winner_criterion :=
+      forall c e, condorcet_winner c e -> wins_election c e.
+
+    Definition condorcet_loser_criterion :=
+      forall c e, condorcet_loser c e -> ~wins_election c e.
+
+    Definition monotonicity_raise_criterion :=
+      forall b1 b2 b3 c r e,
+        rank_selects c r ->
+        wins_election c ( (b1 ++ b2 ++ (r::nil) ++ b3) :: e) ->
+        wins_election c ( (b1 ++ (r::nil) ++ b2 ++ b3) :: e).
+
+    Definition participation_criterion :=
+      forall b e c1 c2,
+        c1 <> c2 ->
+        prefers c1 c2 b ->
+        wins_election c1 e ->
+        wins_election c2 (b :: e) ->
+        False.
+
+  End criteria_definitions.
 
 
   Lemma count_eq (P Q:ballot -> Prop) (e:election) :
@@ -186,9 +184,9 @@ Section ranked_preference_voting_properties.
       apply count_not_satisfies; auto.
   Qed.
 
-
-  Theorem mutual_majority_implies_majority :
-    mutual_majority_criterion -> majority_criterion.
+  Theorem mutual_majority_implies_majority rule :
+    mutual_majority_criterion rule ->
+    majority_criterion rule.
   Proof.
     intros Hmmj c e Hsat.
     set (group := c::nil).
@@ -200,7 +198,7 @@ Section ranked_preference_voting_properties.
       exists n; split; auto.
       revert Hcount; apply count_eq.
       intro b; split; intro.
-      + red; intros. apply first_choice_prefers. 
+      + red; intros. apply first_choice_prefers.
         simpl in H0; intuition; subst cin; auto.
         intro. apply H1. subst cin; auto.
       + apply first_choice_prefers.
@@ -212,13 +210,12 @@ Section ranked_preference_voting_properties.
   Qed.
 
   (* Admitted for now.  This fact is widely clamed, but I'm not sure offhand how to prove it. *)
-  Theorem condorcet_winner_later_no_harm_incompatible :
-    condorcet_winner_criterion ->
-    later_no_harm_criterion ->
+  Theorem condorcet_winner_later_no_harm_incompatible rule :
+    condorcet_winner_criterion rule ->
+    later_no_harm_criterion rule ->
     False.
   Proof.
     intros Hcondorcet Hlater.
-  Admitted. 
-
+  Admitted.
 
 End ranked_preference_voting_properties.
