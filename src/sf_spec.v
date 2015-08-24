@@ -23,8 +23,7 @@ Section election_spec.
   Definition ballot := list rankSelection.
   Definition election := list ballot.
   Definition contestants := list candidate.
-  Variable tiebreak : list candidate -> candidate -> Prop.
-
+(*  Variable tiebreak : list candidate -> candidate -> Prop. *)
   
   Section ballot_properties.
     (**  At any given round of a tabulation, some collection of candidates
@@ -60,7 +59,7 @@ Section election_spec.
            
     (**  A ballot is an overvote if its next ranking contains
          two distinct candidates.
-      *) 
+      *)
     Definition overvote (b:ballot) : Prop :=
       exists r, next_ranking b r /\
          exists c1 c2, In c1 r /\ In c2 r /\ c1 <> c2.
@@ -73,7 +72,6 @@ Section election_spec.
 
     Definition continuing_ballot (b:ballot) :=
       ~exhausted_ballot b.
-
  
     (**  A ballot selects a particular candidate iff it is a
          continuing ballot and its next ranking contains that
@@ -82,7 +80,6 @@ Section election_spec.
     Definition selected_candidate (b:ballot) (c:candidate) :=
       continuing_ballot b /\
       exists r, next_ranking b r /\ In c r.
-
 
 
     (** If a candidate receives a majority of the first choices, that
@@ -132,11 +129,25 @@ majority, the candidate who received the fewest first choices shall be
 eliminated and each vote cast for that candidate shall be transferred to
 the next ranked candidate on that voter's ballot. *)
 
+  Definition participates (c:candidate) (e:election) :=
+    exists b, In b e /\ exists r, In r b /\ In c r.
+
+  Definition is_loser (e:election) (loser:candidate) :=
+    ~eliminated loser /\
+    participates loser e /\
+    forall c' n m,
+      ~eliminated c' ->
+      participates c' e ->
+      first_choices loser e n ->
+      first_choices c' e m ->
+      n <= m.
+
     Definition no_majority (e : election) :=
       forall c, 
         all_candidates e c ->
         Forall (fun candidate => ~majority e candidate) c.
 
+(*
     Definition possibly_eliminated_candidates 
                (e : election) (losers : list candidate) :=
       forall c, all_candidates e c ->
@@ -148,6 +159,7 @@ the next ranked candidate on that voter's ballot. *)
     Definition eliminated_candidate (e : election) (loser : candidate) :=
       forall losers, 
         possibly_eliminated_candidates e losers /\ tiebreak losers loser. 
+*)
     
 
     (**  Every ballot has at most one next ranking.
@@ -248,20 +260,18 @@ The formal specification above counts this situation as a vote for D.
 
   End ballot_properties.
 
-  Definition update_eliminated 
-             (eliminated : candidate -> Prop) (c : candidate) (eliminated' : candidate -> Prop) 
-    :=
-      (forall cs, (eliminated cs = eliminated' cs \/ cs = c)) /\ eliminated' c.
+  Definition update_eliminated (eliminated : candidate -> Prop) (c : candidate) :=
+    fun cs => eliminated cs \/ c = cs.
   
   Inductive winner : 
     election -> (candidate -> Prop) -> candidate -> Prop :=
   | winner_now : forall election winning_candidate eliminated, 
       majority eliminated election winning_candidate ->
       winner election eliminated winning_candidate
-  | winner_elimination : forall election winning_candidate eliminated loser eliminated',
-      no_majority eliminated election  ->
-      eliminated_candidate eliminated election loser ->
-      update_eliminated eliminated loser eliminated' ->
+  | winner_elimination : forall election winning_candidate eliminated loser,
+      no_majority eliminated election ->
+      is_loser eliminated election loser ->
+      let eliminated' := update_eliminated eliminated loser in
       winner election eliminated' winning_candidate ->
       winner election eliminated winning_candidate.      
 
