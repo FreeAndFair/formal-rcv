@@ -310,7 +310,7 @@ unfold sf_spec.selected_candidate.
   inv H0. simpl in *. auto.
 Qed.
 
-Lemma next_ranking_elimintaed :
+Lemma next_ranking_eliminated :
 forall bal rec,
 sf_imp.next_ranking candidate _ rec bal = None ->
 sf_spec.exhausted_ballot candidate (in_record rec) bal.
@@ -741,8 +741,8 @@ Qed.
 
 
 Ltac copy H :=
-match goal with 
-[ H : ?P |- _] => assert P by exact H end.
+match type of H with 
+?P => assert P by exact H end.
 
 Lemma increment_neq' : forall running cd ct  c,
 In (cd, ct) (sf_imp.increment candidate reldec_candidate running c) ->
@@ -883,6 +883,51 @@ induction l; intros.
 Qed.
 
 
+Lemma selected_not_in :
+forall  ef l cd r l0, 
+~(In (Some cd ) l) ->
+sf_imp.option_split
+           (map (sf_imp.next_ranking candidate reldec_candidate r) ef) =
+         (l, l0) ->
+sf_spec.first_choices candidate (in_record r) cd ef 0.
+Proof.
+induction ef; intros.
+- simpl in *. inv H0. constructor.
+- simpl in *. 
+  destruct (sf_imp.next_ranking candidate reldec_candidate r a) eqn:?.
+  + destruct p. destruct (sf_imp.option_split
+                            (map (sf_imp.next_ranking candidate reldec_candidate r) ef)) eqn:?.
+    simpl in *. inv H0. simpl in *.
+    intuition.
+    apply next_ranking_selected in Heqo.
+    constructor.
+    intro. eapply sf_spec.selected_candidate_unique in Heqo; eauto.
+    subst; auto. admit.  (* TODO: fix this...*)
+    eapply IHef; eauto.
+  + destruct (sf_imp.option_split
+              (map (sf_imp.next_ranking candidate reldec_candidate r) ef)) eqn:?.
+    inv H0.
+    simpl in *.
+    apply sf_spec.first_choices_not_selected.
+    intro. intuition. unfold sf_spec.selected_candidate in H0.
+    destruct H0. apply next_ranking_eliminated in Heqo.
+    unfold sf_spec.continuing_ballot in H. intuition.
+    eapply IHef; eauto.
+Qed.
+
+Lemma increment_same_s : 
+forall c running,
+NoDup (fst (split running)) ->
+exists n, In (c, S n) (sf_imp.increment candidate _ running c).
+intros. 
+destruct (in_dec rel_dec_p c (fst (split running))).
+apply in_split in i. destruct i.
+exists x. eapply increment_spec in H; eauto.
+destruct H. apply H. auto.
+exists 0. eapply increment_spec in n; eauto. apply 0.
+Qed.
+
+
 Lemma tabulate''_first_choices : forall ef cd ct es running r
 (NODUP : NoDup (fst (split running))),
 In (cd, ct) (sf_imp.tabulate'' candidate _ 
@@ -897,20 +942,23 @@ Proof.
 induction ef; intros.
 - simpl in *. rewrite Forall_forall in *. specialize (H1 _ H). simpl in H1.
   rewrite app_nil_r.  auto.
-- simpl in H. destruct (sf_imp.next_ranking candidate reldec_candidate r a) eqn:?.
+- simpl in H. 
+  assert (Permutation (a :: (es ++ ef)) (es ++ a :: ef)). 
+  apply Permutation_middle.
+  eapply first_choices_perm; eauto. clear H2.
+  destruct (sf_imp.next_ranking candidate reldec_candidate r a) eqn:?.
   +  destruct p. destruct (sf_imp.option_split
                      (map (sf_imp.next_ranking candidate reldec_candidate r)
                           ef)) eqn:?. simpl in *. 
-     assert (Permutation (a :: (es ++ ef)) (es ++ a :: ef)). 
-     apply Permutation_middle.
-     eapply first_choices_perm; eauto. clear H2.
      apply next_ranking_selected in Heqo.
      destruct (rel_dec_p c cd). 
      * subst. 
-       { destruct ct.
+       { destruct ct. 
          - clear - H NODUP.
-           exfalso. 
-           eapply (tabulate_not_0 _ _ _ _ _ _ _ H).
+           assert (X := increment_same_s cd running NODUP).
+           destruct X.
+           exfalso. eapply tabulate_not_0; [ | | | apply H]; eauto.
+           apply increment_nodup. auto.
          - constructor. auto. 
            destruct (in_dec rel_dec_p cd (fst (split running))).
            + eapply IHef; eauto.
@@ -928,35 +976,44 @@ induction ef; intros.
                assert (1 = (S ct)). eapply NoDup_In_fst; [ | eauto | eauto ].
                apply tabulate_nodup. apply increment_nodup. auto.
                inv H3. change 0 with (0 + 0). 
-               apply first_choices_app. 
-               
-               
-               
-               SearchAbout In.
-
-eapply tabulate''_same.
-
-
-
-  apply nodup_in.
-  
-    eapply increment_neq';
-
-    simpl in *.
-    apply neg_rel_dec_correct in H0. unfold eq_dec in H. rewrite H0 in H.
-
-    eapply increment_neq.
-    assert (In (cd, 1) (sf_imp.increment candidate reldec_candidate running cd)).
-    eapply increment_spec; eauto.
-    eapply increment_neq in H3; eauto.
-    eapply tab_inc_s. apply increment_nodup.
-    auto.
-    apply increment_nodup. apply increment_nodup. eauto.
-    eauto. 
-    
-Check increment_spec.
-    eapply increment_spec in n.
-       
+               { apply first_choices_app. 
+                 - apply H0. auto.
+                 - eapply selected_not_in; eauto.
+               } 
+               apply increment_nodup; auto.
+       }
+     * apply sf_spec.first_choices_not_selected. intro.
+       apply n. eapply sf_spec.selected_candidate_unique; eauto.
+       admit. (*TODO: Still fix this...*)
+       { destruct (in_dec rel_dec_p cd (fst (split running))).
+         - copy i. apply in_split in H2. destruct H2.
+           eapply IHef; eauto.
+           rewrite Heqp. simpl. eapply tabulate''_same in H; eauto.
+           eauto.
+           apply increment_nodup. auto. 
+           apply increment_neq; auto.
+         - eapply IHef; eauto.
+           rewrite Heqp. simpl.
+           eapply tabulate''_same_notin in H.
+           eauto. apply increment_nodup. auto.
+           auto. intro.
+           apply in_split in H2.
+           destruct H2. 
+           apply n0.
+           eapply increment_neq' in H2. 
+           apply in_split_l in H2. auto.
+           auto. auto.
+       }
+  + destruct ( sf_imp.option_split
+                 (map (sf_imp.next_ranking candidate reldec_candidate r)
+                      ef)) eqn:?.
+    simpl in *. 
+    apply next_ranking_eliminated in Heqo.
+    apply sf_spec.first_choices_not_selected.
+    intro. unfold sf_spec.selected_candidate in H2.
+    intuition.
+    eapply IHef; eauto. rewrite Heqp. simpl. auto.
+Qed.
 
     
 Lemma inc_spec_rev : forall running cd ct,
