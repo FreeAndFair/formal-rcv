@@ -119,8 +119,7 @@ Require Import Omega.
 Lemma gtb_nat_gt : forall a b,
 gtb_nat a b = true <-> a > b.
 unfold gtb_nat in *.
-intros. destruct (nat_compare a b) eqn:?;
-intuition.
+intros. destruct (nat_compare a b) eqn:?; intuition; try discriminate.
 - apply  nat_compare_eq in Heqc. omega. 
 - apply nat_compare_lt in Heqc. omega.
 - apply nat_compare_gt in Heqc. auto.
@@ -130,7 +129,7 @@ Check filter.
 
 Definition get_bottom_votes (votes : list (candidate * nat)) :=
 match votes with
-| (c, v) :: t => map fst (filter (fun (x : candidate * nat) => let (_, v') := x in 
+| (c, v) :: t => map (@fst _ _) (filter (fun (x : candidate * nat) => let (_, v') := x in 
                                   beq_nat v v') votes)
 | nil => nil
 end.
@@ -225,7 +224,7 @@ Definition election1 :=
  ballot3;
  ballot4].
 
-Definition election2 := repeat_append election1 100000.
+Definition election2 := repeat_append election1 1000.
 
 Compute (nat_tabulate nil (election1)).
 
@@ -234,8 +233,3 @@ match l with
 | h :: t => Some h
 | _ => None
 end.
-
-
-
-
-  

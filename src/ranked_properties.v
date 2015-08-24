@@ -19,15 +19,23 @@ Section ranked_preference_voting_properties.
   Definition rank_selects (c:candidate) (r:rankSelection) : Prop :=
     In c r /\ forall c', In c' r -> c = c'.
 
-  Definition first_choice (c:candidate) (b:ballot) : Prop :=
-    exists first_rank rest,
-      b = first_rank :: rest /\
-      rank_selects c first_rank.
+  Inductive first_choice (c:candidate) : ballot -> Prop :=
+  | first_top : forall b r,
+                rank_selects c r ->
+                first_choice c (r::b)
+
+  | first_skip : forall b,
+                first_choice c b ->
+                first_choice c (nil::b).
 
   Inductive prefers (c1 c2:candidate) : ballot -> Prop :=
   | prefers_first : forall b r,
                 rank_selects c1 r ->
                 prefers c1 c2 (r::b)
+
+  | prefers_skip : forall b,
+                prefers c1 c2 b ->
+                prefers c1 c2 (nil::b)
 
   | prefers_after : forall b c' r,
                 c' <> c1 ->
@@ -35,7 +43,6 @@ Section ranked_preference_voting_properties.
                 rank_selects c' r ->
                 prefers c1 c2 b ->
                 prefers c1 c2 (r::b).
-
 
   Lemma alternatives_exist :
     forall c:candidate, exists c', c <> c'.
@@ -62,16 +69,29 @@ Section ranked_preference_voting_properties.
     first_choice c b <-> (forall c2, c <> c2 -> prefers c c2 b).
   Proof.
     split.
-    * intros [r [b' [Heq Hrank]]] c2 Hc2. subst b.
+    * intro H. induction H; intros.
       apply prefers_first; trivial.
+      apply prefers_skip; auto.
 
     * intro Hpref.
       destruct (alternatives_exist c) as [c' Hc'].
-      generalize (Hpref c' Hc'); intros. inversion H; subst.
-      red; eauto.
+      generalize (Hpref c' Hc'); intros.
+      induction H.
+      apply first_top. auto.
+      apply first_skip; auto.
+      apply IHprefers.
+      intros.
+      generalize (Hpref c2 H0). intros.
+      inversion H1; auto.
+      destruct H3. elim H3.
       assert (c <> c'0); auto.
-      generalize (Hpref c'0 H4); intros. inversion H5; subst.
-      red; eauto.
+      generalize (Hpref c'0 H3); intros. inversion H4; subst.
+      apply first_top; auto.
+      apply first_skip.
+      apply IHprefers.
+      intros.
+      generalize (Hpref c2 H5); intros. inversion H7; subst; auto.
+      destruct H9. destruct H8.
       cut( c'1 = c'0 ); [ intros; contradiction | ].
       eapply rank_selects_unique; eauto.
   Qed.
@@ -86,8 +106,11 @@ Section ranked_preference_voting_properties.
         count_votes P e n ->
         count_votes P (b::e) n.
 
+  Definition total_votes e n :=
+    count_votes (fun b => exists c, first_choice c b) e n.
+
   Definition majority_satisfies (P:ballot -> Prop) (e:election) :=
-    exists n, count_votes P e n /\ 2*n > length e.
+    exists n, count_votes P e n /\ 2*n > t e.
 
   Definition prefers_group (group:list candidate) (b:ballot) : Prop :=
     forall cin cout,
@@ -113,45 +136,53 @@ Section ranked_preference_voting_properties.
 
 
   Section criteria_definitions.
-    Variable wins_election : candidate -> election -> Prop.
+    Variable may_win_election : candidate -> election -> Prop.
+
+    Definition shall_win_election (c:candidate) (e:election) :=
+      may_win_election c e /\
+      forall c', may_win_election c' e -> c = c'.
+
+    Definition group_shall_win_election (group:list candidate) e :=
+      (exists c, In c group /\ may_win_election c e) /\
+      (forall c, may_win_election c e -> In c group).
 
     Definition majority_criterion : Prop :=
       forall (c:candidate) (e:election),
         majority_satisfies (first_choice c) e ->
-        wins_election c e.
+        shall_win_election c e.
 
     Definition mutual_majority_criterion : Prop :=
       forall (group:list candidate) (e:election),
         nontrivial_grouping group ->
         majority_satisfies (prefers_group group) e ->
-        exists c, In c group /\ wins_election c e.
+        group_shall_win_election group e.
 
     Definition later_no_harm_criterion :=
       forall (e:election) (b b':ballot) (c:candidate),
         let e1 := ( b :: e ) in
         let e2 := ( (b ++ b') :: e ) in
         (exists r, In r b /\ rank_selects c r) ->
-        wins_election c e1 ->
-        wins_election c e2.
+        may_win_election c e1 ->
+        may_win_election c e2.
 
     Definition condorcet_winner_criterion :=
-      forall c e, condorcet_winner c e -> wins_election c e.
+      forall c e, condorcet_winner c e -> shall_win_election c e.
 
     Definition condorcet_loser_criterion :=
-      forall c e, condorcet_loser c e -> ~wins_election c e.
+      forall c e, condorcet_loser c e -> ~may_win_election c e.
 
     Definition monotonicity_raise_criterion :=
       forall b1 b2 b3 c r e,
         rank_selects c r ->
-        wins_election c ( (b1 ++ b2 ++ (r::nil) ++ b3) :: e) ->
-        wins_election c ( (b1 ++ (r::nil) ++ b2 ++ b3) :: e).
+        may_win_election c ( (b1 ++ b2 ++ (r::nil) ++ b3) :: e) ->
+        may_win_election c ( (b1 ++ (r::nil) ++ b2 ++ b3) :: e).
 
     Definition participation_criterion :=
       forall b e c1 c2,
         c1 <> c2 ->
         prefers c1 c2 b ->
-        wins_election c1 e ->
-        wins_election c2 (b :: e) ->
+        may_win_election c1 e ->
+        may_win_election c2 (b :: e) ->
         False.
 
   End criteria_definitions.
@@ -205,8 +236,12 @@ Section ranked_preference_voting_properties.
         intros. apply H.
         red; simpl; auto.
         red; simpl; intuition.
-    * destruct H.
-      simpl in H; intuition; subst; auto.
+    * split.
+      + destruct H.
+        simpl in H; intuition; subst x; auto.
+      + intros. apply H0 in H1.
+        destruct H1; auto.
+        elim H1.
   Qed.
 
   (* Admitted for now.  This fact is widely clamed, but I'm not sure offhand how to prove it. *)

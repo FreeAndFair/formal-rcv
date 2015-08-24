@@ -99,7 +99,7 @@ induction bal.
 - simpl in *. congruence.
 - simpl in *.
   destruct a.
-  + intuition. destruct H0. exists x. intuition.
+  + intuition. destruct H0. exists x. firstorder.
   + destruct (forallb (eq_dec c) a) eqn:Heqb0.
     * { destruct (sf_imp.eliminated candidate reldec_candidate rec c) eqn:?.
          - apply IHbal in H. clear IHbal.
@@ -321,7 +321,7 @@ induction bal.
 -  left. unfold sf_spec.no_viable_candidates. intros. inv H0.
 - simpl in *. destruct a.
    + intuition. left. apply no_viable_candidates_cons. intuition.
-     unfold sf_spec.no_viable_candidates. intros. inv H0; intuition.
+     unfold sf_spec.no_viable_candidates. intros. inv H0; firstorder.
      right. unfold sf_spec.overvote in *. destruct H1. exists x.
      intuition. simpl. intuition.
    + destruct (forallb (eq_dec c) a) eqn:?.
@@ -626,7 +626,7 @@ induction running; intros.
   simpl in *.
   destruct (eq_dec c0 cd) eqn:?.
   + simpl in *. intuition.
-    apply reldec_correct_candidate in Heqb. inv H1. intuition.
+    apply reldec_correct_candidate in Heqb. inv H1. subst. intuition.
   + simpl in *. intuition.
 Qed.
 
@@ -790,7 +790,7 @@ induction running; intros.
 edestruct increment_spec; eauto.
              
 edestruct increment_spec. Focus 3.
-         apply H0 in H.
+
 
 
 
