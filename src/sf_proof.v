@@ -902,7 +902,7 @@ induction ef; intros.
     apply next_ranking_selected in Heqo.
     constructor.
     intro. eapply sf_spec.selected_candidate_unique in Heqo; eauto.
-    subst; auto. admit.  (* TODO: fix this...*)
+    subst; auto.
     eapply IHef; eauto.
   + destruct (sf_imp.option_split
               (map (sf_imp.next_ranking candidate reldec_candidate r) ef)) eqn:?.
@@ -984,7 +984,6 @@ induction ef; intros.
        }
      * apply sf_spec.first_choices_not_selected. intro.
        apply n. eapply sf_spec.selected_candidate_unique; eauto.
-       admit. (*TODO: Still fix this...*)
        { destruct (in_dec rel_dec_p cd (fst (split running))).
          - copy i. apply in_split in H2. destruct H2.
            eapply IHef; eauto.
@@ -1015,105 +1014,6 @@ induction ef; intros.
     eapply IHef; eauto. rewrite Heqp. simpl. auto.
 Qed.
 
-    
-Lemma inc_spec_rev : forall running cd ct,
-In (cd, S ct) (sf_imp.increment candidate reldec_candidate running cd) ->
-In (cd, ct) running.
-Proof.
-induction running; intros.
-- simpl in *. intuition. inv H0.
-
-
-edestruct increment_spec; eauto.
-             
-edestruct increment_spec. Focus 3.
-
-
-
-
-         apply increment_spec in H.
-         apply tabulate_spec in H.
-         simpl in *. unfold sf_imp.increment in H.
-          - unfold sf_imp.increment in *.
-            induction l. simpl in H. intuition. congruence.
-            apply IHl. simpl in H. destruct a0. destruct (eq_dec cd c).
-            apply IHl in H.
-         
-       
-       assert (l = fst (sf_imp.option_split
-         (map (sf_imp.next_ranking candidate reldec_candidate r) ef))). 
-       destruct ( sf_imp.option_split
-           (map (sf_imp.next_ranking candidate reldec_candidate r) ef)).
-       inv Heqp. auto.
-       subst. eapply IHef in H. 
-       rewrite app_comm_cons. apply H.
-       intros.
-       specialize (H0 cnd).
-       intuition. apply H0.  
-       { clear - H2.
-         induction running; auto.
-         simpl in *. destruct a. intros.
-         destruct (split running) eqn:?. simpl in *.
-         destruct H. 
-         subst. 
-         destruct (eq_dec cnd cd) eqn:?. simpl in *. rewrite Heqp in *. simpl in *.
-         auto. simpl in *. apply H2.
-         destruct (split (sf_imp.increment candidate reldec_candidate running cd)) eqn:?.
-         simpl. auto. apply IHrunning; auto.
-         destruct (eq_dec c cd). simpl in *. rewrite Heqp in *. simpl in *. intuition.
-         simpl in *. intros. apply H2.
-         destruct (split (sf_imp.increment candidate reldec_candidate running cd)).
-         simpl in *. auto.  }
-
-
-  +
-           
-                             
-
-apply sf_spec.first_choices_selected.
-       constructor; auto.
-           pose proof (first_choices_app _ _ (a::ef) _ (ct - x) _ _ H3).
-           cut (ct >= x). intros. 
-           rewrite <- Minus.le_plus_minus in H1; auto.
-           apply H1.
-           assert (ct >= x). eapply first_choices_app_gt; eauto.
-           apply H1.
-         SearchAbout app.
-         rewrite app_cons.
-         eapply first_choices_app.
-       
-
-
-
-    
-    
-
-       specialize (H1 (c, b)).
-  assert (sf_spec.first_choices candidate (in_record r) cd (es ++ ef) ct).
-  eapply IHef.
- 
-  assert (l = fst (sf_imp.option_split
-         (map (sf_imp.next_ranking candidate reldec_candidate r) ef))). 
-  destruct ( sf_imp.option_split
-           (map (sf_imp.next_ranking candidate reldec_candidate r) ef)).
-  inv Heqp. auto. subst. eauto.
-  rewrite Forall_forall in *. intros.  
-  specialize (H0 (c, n)). apply H0. simpl in *.
-
-
-  
-  
-  
- 
-
-forall b s, In b election ->
-                    continuing_ballot b ->
-                    In s (sf_imp.drop_none
-                            (map (sf_imp.next_ranking candidate reldec_candidate rec)
-                                 election)) ->  
-                    sf_spec.selected_candidate candidate (in_record rec) bal (fst x)).
-
-                                      
 
 Lemma run_election'_correct : forall fuel election winner tb rec rec',
     sf_imp.run_election' candidate _ tb election rec fuel = (Some winner, rec') ->
