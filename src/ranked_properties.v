@@ -110,7 +110,9 @@ Section ranked_preference_voting_properties.
     count_votes (fun b => exists c, first_choice c b) e n.
 
   Definition majority_satisfies (P:ballot -> Prop) (e:election) :=
-    exists n, count_votes P e n /\ 2*n > t e.
+    exists n t, count_votes P e n /\
+                total_votes e t /\
+                2*n > t.
 
   Definition prefers_group (group:list candidate) (b:ballot) : Prop :=
     forall cin cout,
@@ -225,8 +227,8 @@ Section ranked_preference_voting_properties.
     * split; [ exists c; red; simpl; auto | ].
       destruct (alternatives_exist c) as [c' Hc'].
       exists c'; red; simpl; intuition.
-    * destruct Hsat as [n [Hcount Hmaj]].
-      exists n; split; auto.
+    * destruct Hsat as [n [t [Hcount [Hmaj Hnt]]]].
+      exists n, t; split; auto.
       revert Hcount; apply count_eq.
       intro b; split; intro.
       + red; intros. apply first_choice_prefers.
