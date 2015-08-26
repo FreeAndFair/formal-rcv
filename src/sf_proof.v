@@ -353,15 +353,25 @@ Lemma insert_sorted : forall {A} c sorted (a : A),
     (forall a b, c a b = false -> c b a = true) ->
     Sorted (boolCmpToProp c) sorted ->
     Sorted (boolCmpToProp c) (sf_imp.insert c a sorted).
-induction sorted; intros. 
-+ simpl. auto.
-+ simpl. inv H0.
-  destruct (c a0 a) eqn:?. 
+intros.
+induction H0.
+- simpl. auto.
+- simpl.
+  destruct (c a a0) eqn:?. 
   constructor. auto. constructor. unfold boolCmpToProp. rewrite Heqb. auto.
-  constructor. auto.  
-  specialize (IHsorted a0 H H3). 
-  destruct (sf_imp.insert c a0 sorted) eqn:?.
-Admitted. 
+  constructor. auto.
+  clear IHSorted H0.
+  induction l.
+  + simpl in *.
+    constructor. unfold boolCmpToProp. apply H in Heqb. rewrite Heqb.
+    auto.
+  + simpl in *. destruct (c a a1) eqn:?. constructor. apply H in Heqb. 
+    unfold boolCmpToProp. rewrite Heqb. auto.
+    constructor; auto.
+    unfold boolCmpToProp.
+    apply H in Heqb. inv H1. unfold boolCmpToProp in H2. 
+    auto.
+Qed.
   
        
 Lemma insertion_sort_sorted' : forall {A} (l : list A) (sorted : list A) c,
@@ -375,29 +385,48 @@ induction l.
   apply insert_sorted; auto.
 Qed.      
 
-Lemma tabulate_continuing :
-forall rec elect res elect',
-sf_imp.tabulate candidate _ rec elect = (res, elect') ->
-Forall (sf_spec.continuing_ballot candidate (in_record rec)) elect'.
-Proof.
+Lemma insertion_sort_sorted : forall {A} (l : list A) c,
+    (forall a b, c a b = false -> c b a = true) -> 
+    Sorted (boolCmpToProp c) (sf_imp.insertionsort c l). 
 intros.
-rewrite Forall_forall. intros.
-induction elect.
-- simpl in *.
-  inversion H.
-  subst.
-  inversion H0.
-- unfold sf_imp.tabulate in H. simpl in H.
-  destruct (sf_imp.next_ranking candidate reldec_candidate rec a) eqn:?.
-  + destruct p. 
-  
-  unfold sf_imp.next_ranking in H.
-Admitted. 
+apply insertion_sort_sorted'; auto.
+Qed.
 
-Locate Permutation.
-Print Permutation.
+Lemma insert_permutation :
+  forall {A} l2 l1  (a : A) c,
+    Permutation l1 l2 ->
+    Permutation (a :: l1) (sf_imp.insert c a l2).
+Proof.
+induction l2; intros. 
+- apply Permutation_sym in H. apply Permutation_nil in H. subst. simpl in *. auto.
+- simpl in *. destruct (c a0 a).
+  constructor. auto.
+  eapply Permutation_trans. instantiate (1:= (a0 :: a :: l2)).
+  auto. rewrite perm_swap. constructor.
+  apply IHl2. auto.
+Qed.
 
-Axiom insertionsort_permutation : forall A c (l: list A), Permutation (sf_imp.insertionsort c l) (l).
+
+Lemma insertion_sort_permutation' :
+  forall {A} (le ls : list A) c sorted,
+    Permutation ls sorted -> 
+    Permutation (ls ++ le) (sf_imp.insertionsort' c le sorted).
+Proof.
+induction le; intros.
+- simpl in *. rewrite app_nil_r. auto.
+- simpl. rewrite <- Permutation_middle.
+  rewrite app_comm_cons.
+  apply IHle. apply insert_permutation. auto.
+Qed.
+
+Lemma insertion_sort_permutation :
+  forall {A} (l : list A) c,
+    Permutation l (sf_imp.insertionsort c l).
+intros. rewrite <- app_nil_l at 1.
+unfold sf_imp.insertionsort.
+apply insertion_sort_permutation'. auto.
+Qed.
+
 
 Definition tb_func_to_Prop {c : Set} (f : list c -> option c) :=
 fun l cd => match f l with 
@@ -405,30 +434,6 @@ fun l cd => match f l with
          | None => False
 end.
 
-Lemma tabulate_correct : forall rec election rs election',
-sf_imp.tabulate candidate _ rec election = (rs, election') ->
-Forall (fun (x: (candidate * nat)) => let (cd, fc) := x in
-                 sf_spec.first_choices candidate (in_record rec) cd election fc) rs.
-Proof.
-intros.
-unfold sf_imp.tabulate in H. destruct (sf_imp.option_split
-             (map (sf_imp.next_ranking candidate reldec_candidate rec)
-                election)) eqn:?.
-induction election.
-- simpl in *. rewrite Forall_forall. intros. destruct x. inv Heqp. simpl in *. inv H.
-  simpl in *. inv H0.
-- simpl in Heqp. destruct (sf_imp.next_ranking candidate reldec_candidate rec a) eqn:?.
-  destruct p. destruct (sf_imp.option_split
-                (map (sf_imp.next_ranking candidate reldec_candidate rec)
-                   election)) eqn:?. inv Heqp. rewrite Forall_forall.
-  intros. destruct x. constructor.  
-  + admit.
-  + inv H.
-    pose proof (insertionsort_permutation _ (sf_imp.cnlt candidate) 
-                                          (sf_imp.tabulate' candidate reldec_candidate (Some c :: l1))).
-    eapply Permutation_in in H0; eauto.
-    unfold sf_imp.tabulate' in H0. simpl in H0.
-Admitted. 
 
 Lemma in_split : forall A B (f : A) (l : list (A * B)), 
               In f (fst (split l)) -> 
@@ -1013,13 +1018,168 @@ induction ef; intros.
     intuition.
     eapply IHef; eauto. rewrite Heqp. simpl. auto.
 Qed.
+Print sf_imp.tabulate.
+
+Lemma tabulate'_first_choices : forall l cd ct  r,
+In (cd, ct) (sf_imp.tabulate' _ _ (fst (sf_imp.option_split
+                                      (map (sf_imp.next_ranking candidate reldec_candidate r)
+                                           l)))) -> 
+sf_spec.first_choices candidate (in_record r) cd (l) ct. 
+Proof.
+intros.
+rewrite <- app_nil_l at 1.
+eapply tabulate''_first_choices in H. eauto.
+constructor.
+intros. constructor.
+constructor.
+Qed.
+
+Lemma tabulate_correct : forall rec election rs election',
+sf_imp.tabulate candidate _ rec election = (rs, election') ->
+Forall (fun (x: (candidate * nat)) => let (cd, fc) := x in
+                 sf_spec.first_choices candidate (in_record rec) cd election fc) rs.
+Proof.
+intros.
+unfold sf_imp.tabulate in H. destruct (sf_imp.option_split
+             (map (sf_imp.next_ranking candidate reldec_candidate rec)
+                election)) eqn:?.
+assert (PRM := insertion_sort_permutation (sf_imp.tabulate' candidate reldec_candidate l)
+                                          (sf_imp.cnlt candidate)).
+rewrite Forall_forall. intros. destruct x. destruct ((sf_imp.insertionsort (sf_imp.cnlt candidate)
+         (sf_imp.tabulate' candidate reldec_candidate l),
+      sf_imp.drop_none l0)) eqn:?. inv H.
+inv Heqp0.
+apply Permutation_sym in PRM.
+eapply Permutation_in in PRM; eauto.
+assert (l = fst (sf_imp.option_split
+           (map (sf_imp.next_ranking candidate reldec_candidate rec) election))).
+rewrite Heqp. auto.  subst.
+clear H0.
+apply tabulate'_first_choices in PRM. auto.
+Qed.
+
+Lemma leb_false :
+forall n0  n,
+NPeano.leb n0 n = false ->
+n <= n0.
+Proof. 
+induction n0; intros.
+- inv H.
+- simpl in *.  destruct n.
+  omega. 
+  apply IHn0 in H. omega.
+Qed.
+
+
+Lemma tabulate_sorted : 
+forall rec election rs election',
+sf_imp.tabulate _ _ rec election = (rs, election') ->
+Sorted (boolCmpToProp (sf_imp.cnlt candidate)) rs.
+Proof.
+intros.
+intros.
+unfold sf_imp.tabulate in H. destruct (sf_imp.option_split
+             (map (sf_imp.next_ranking candidate reldec_candidate rec)
+                election)) eqn:?.
+inv H. apply insertion_sort_sorted.
+intros. unfold sf_imp.cnlt. destruct b. 
+destruct a. simpl in *. apply leb_false in H.
+apply NPeano.leb_le. auto.
+Qed.
+
+Lemma get_bottom_votes_is_loser :
+forall election rec losers rs election',
+sf_imp.tabulate _ _ rec election = (rs, election') ->
+sf_imp.get_bottom_votes  _ rs = losers ->
+Forall (sf_spec.is_loser candidate (in_record rec) election) losers.
+Proof.
+intros.
+destruct (sf_imp.tabulate _ _ rec election) eqn:?. inv H.
+destruct rs. simpl in *. auto.
+simpl in *. destruct p. rewrite <- EqNat.beq_nat_refl.
+simpl. rewrite Forall_forall.
+intros. simpl in *.
+destruct H. subst. assert (SRTD := tabulate_sorted _ _ _ _ Heqp).
+assert (CRCT := tabulate_correct _ _ _ _ Heqp).
+rewrite Forall_forall in CRCT.
+specialize (CRCT (x, n)). intuition.
+simpl in *. intuition. clear H0.
+inv SRTD.
+unfold sf_spec.is_loser. 
+
+Lemma tabulate_continuing :
+forall election rs election' rec,
+sf_imp.tabulate _ _ rec election = (rs, election') ->
+Forall (fun x =>~ in_record rec x)(fst (split rs)) .
+Proof.
+  intros. 
+unfold sf_imp.tabulate in *.
+Check sf_imp.increment.
+
+Lemma increment_not_eliminated : 
+forall vs c rec,
+~(in_record rec c) ->
+Forall (fun cd =>  ~(in_record rec cd)) (fst (split vs)) ->
+Forall (fun cd => ~(in_record rec cd)) (fst (split (sf_imp.increment candidate _ vs c))).
+Proof.
+induction vs; intros.
+- simpl in *. auto.
+- simpl in *. rewrite Forall_forall in *.
+  intros. destruct a.
+  destruct (eq_dec c0 c) eqn:?. 
+  + simpl in *. destruct (split vs) eqn:?.
+    simpl in *. intuition. subst. apply reldec_correct_candidate in Heqb.
+    subst. intuition.
+    specialize (H0 x). intuition.
+  + simpl in *. destruct (split (sf_imp.increment candidate reldec_candidate vs c)) eqn:?.
+    simpl in *. intuition.
+    * subst. specialize (H0 x). 
+      destruct (split vs) eqn:?. simpl in *. intuition.
+    * eapply IHvs in H; eauto.
+      rewrite Forall_forall in H.
+      eapply H; eauto.       
+      rewrite Heqp. auto.
+      rewrite Forall_forall. intros.
+      specialize (H0 x0). destruct (split vs).
+      simpl in *. intuition.
+Qed.
+
+
+Lemma tabulate''_continuing : forall ef cd ct  running r,
+In (cd, ct) (sf_imp.tabulate'' candidate _ 
+                               (fst (sf_imp.option_split
+                                      (map (sf_imp.next_ranking candidate reldec_candidate r)
+                                           ef))) running) -> 
+Forall (fun x => let (cnd, n) := (x: candidate * nat) 
+                 in ~(in_record r cnd)) running ->
+~(in_record r cd). 
+Proof.
+induction ef; intros.
+- simpl in *. rewrite Forall_forall in H0.
+  specialize (H0 (cd,ct)). intuition.
+- simpl in *. destruct ( sf_imp.next_ranking candidate reldec_candidate r a) eqn:?.
+  + destruct p. apply next_ranking_selected in Heqo.
+    destruct (sf_imp.option_split
+                (map (sf_imp.next_ranking candidate reldec_candidate r)
+                     ef)) eqn:?. simpl in *.
+    intro.
+    eapply IHef. 
+  apply sf_spec.selected_candidate_not_eliminated in Heqo. 
+  unfold sf_spec.selected_candidate in Heqo.
+  destruct Heqo. unfold sf_spec.continuing_ballot in H1.
+
+Lemma selected_not_eliminated 
+  unfold sf_spec.exhausted_ballot in H1. 
+  Check next_ranking_selected.
+Fixpoint find_eliminated' (eliminated : list candidate) (votes : list (candidate * nat)) (sum : nat) :=
 
 
 Lemma run_election'_correct : forall fuel election winner tb rec rec',
     sf_imp.run_election' candidate _ tb election rec fuel = (Some winner, rec') ->
-    sf_spec.winner candidate (tb_func_to_Prop tb) election (in_record []) winner.
+    sf_spec.winner candidate election (in_record []) winner.
 induction fuel; intros.
 simpl in *. congruence.
+simpl in *.
 Admitted.
 
 

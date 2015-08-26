@@ -71,7 +71,7 @@ tabulate'' rs nil.
 
 Definition cnlt (a b : (candidate * nat)) : bool :=
 match a, b with
-(_, n1), (_, n2) => NPeano.ltb n1 n2
+(_, n1), (_, n2) => NPeano.leb n1 n2
 end.
 
 Fixpoint insert {A} (cmp : A -> A -> bool) (i : A) (l : list A) :=
@@ -124,8 +124,6 @@ intros. destruct (nat_compare a b) eqn:?; intuition; try discriminate.
 - apply nat_compare_lt in Heqc. omega.
 - apply nat_compare_gt in Heqc. auto.
 Qed.
-
-Check filter.
 
 Definition get_bottom_votes (votes : list (candidate * nat)) :=
 match votes with
