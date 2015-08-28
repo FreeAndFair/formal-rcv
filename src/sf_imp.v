@@ -125,6 +125,7 @@ intros. destruct (nat_compare a b) eqn:?; intuition; try discriminate.
 - apply nat_compare_gt in Heqc. auto.
 Qed.
 
+
 Definition get_bottom_votes (votes : list (candidate * nat)) :=
 match votes with
 | (c, v) :: t => map (@fst _ _) (filter (fun (x : candidate * nat) => let (_, v') := x in 
@@ -176,8 +177,17 @@ match fuel with
 | _ => (None, rec)
 end.
 
-Definition run_election elect :=
-run_election' elect nil (length elect).
+Fixpoint find_0s (all_candidates : list candidate) (initial_selected : list candidate) :=
+match all_candidates with
+| h::t => if existsb (eq_dec h) initial_selected
+          then find_0s t initial_selected
+          else h :: (find_0s t initial_selected)
+| nil => nil
+end.
+
+Definition run_election elect all_candidates :=
+let initial_selected := drop_none (fst (option_split (map (next_ranking nil) elect))) in
+run_election' elect (find_0s all_candidates initial_selected :: []) (length elect).
 
 
 End candidate.

@@ -1087,26 +1087,6 @@ destruct a. simpl in *. apply leb_false in H.
 apply NPeano.leb_le. auto.
 Qed.
 
-Lemma get_bottom_votes_is_loser :
-forall election rec losers rs election',
-sf_imp.tabulate _ _ rec election = (rs, election') ->
-sf_imp.get_bottom_votes  _ rs = losers ->
-Forall (sf_spec.is_loser candidate (in_record rec) election) losers.
-Proof.
-intros.
-destruct (sf_imp.tabulate _ _ rec election) eqn:?. inv H.
-destruct rs. simpl in *. auto.
-simpl in *. destruct p. rewrite <- EqNat.beq_nat_refl.
-simpl. rewrite Forall_forall.
-intros. simpl in *.
-destruct H. subst. assert (SRTD := tabulate_sorted _ _ _ _ Heqp).
-assert (CRCT := tabulate_correct _ _ _ _ Heqp).
-rewrite Forall_forall in CRCT.
-specialize (CRCT (x, n)). intuition.
-simpl in *. intuition. clear H0.
-inv SRTD.
-unfold sf_spec.is_loser. 
-
 Lemma tabulate_continuing :
 forall election rs election' rec,
 sf_imp.tabulate _ _ rec election = (rs, election') ->
@@ -1150,23 +1130,235 @@ In (cd, ct) (sf_imp.tabulate'' candidate _
                                (fst (sf_imp.option_split
                                       (map (sf_imp.next_ranking candidate reldec_candidate r)
                                            ef))) running) -> 
-Forall (fun x => let (cnd, n) := (x: candidate * nat) 
-                 in ~(in_record r cnd)) running ->
+Forall (fun x => ~(in_record r x)) (fst (split running)) ->
 ~(in_record r cd). 
 Proof.
 induction ef; intros.
 - simpl in *. rewrite Forall_forall in H0.
-  specialize (H0 (cd,ct)). intuition.
+  specialize (H0 (cd)). intuition. apply H0; auto.
+  apply in_split_l in H. simpl in H. auto.
 - simpl in *. destruct ( sf_imp.next_ranking candidate reldec_candidate r a) eqn:?.
   + destruct p. apply next_ranking_selected in Heqo.
     destruct (sf_imp.option_split
                 (map (sf_imp.next_ranking candidate reldec_candidate r)
                      ef)) eqn:?. simpl in *.
-    intro.
-    eapply IHef. 
-  apply sf_spec.selected_candidate_not_eliminated in Heqo. 
-  unfold sf_spec.selected_candidate in Heqo.
-  destruct Heqo. unfold sf_spec.continuing_ballot in H1.
+    apply sf_spec.selected_candidate_not_eliminated in Heqo. 
+    eapply increment_not_eliminated in Heqo; eauto. 
+    eapply IHef. rewrite Heqp. simpl. eauto.
+    auto.
+  + destruct (sf_imp.option_split
+                (map (sf_imp.next_ranking candidate reldec_candidate r)
+                     ef)) eqn:?.
+    simpl in *.
+    eapply IHef. rewrite Heqp. simpl. eauto.
+    eauto.
+Qed.
+
+Lemma sf_first_choices_unique : forall (c : candidate) eliminated e n1 n2,
+    sf_spec.first_choices _ eliminated c e n1 ->
+    sf_spec.first_choices _ eliminated c e n2 ->
+    n1 = n2.
+Admitted.
+
+Lemma tabulate''_first_choices_complete : forall ef cd ct es running r
+(NODUP : NoDup (fst (split running))), 
+(forall cnd cnt, 
+cnt <> 0 ->
+sf_spec.first_choices candidate (in_record r) cnd es cnt -> In (cnd, cnt) running) ->
+ct <> 0 -> 
+sf_spec.first_choices candidate (in_record r) cd (es ++ ef) ct ->
+In (cd, ct) (sf_imp.tabulate'' candidate _ 
+                               (fst (sf_imp.option_split
+                                      (map (sf_imp.next_ranking candidate reldec_candidate r)
+                                           ef))) running). 
+Proof.
+induction ef; intros.
+- simpl in *. rewrite app_nil_r in *. intuition.  
+Admitted.
+(*
+- simpl in *. 
+  destruct ( sf_imp.next_ranking candidate reldec_candidate r a ) eqn:?.
+  + destruct p. simpl.
+    destruct (sf_imp.option_split
+                (map (sf_imp.next_ranking candidate reldec_candidate r) ef)) eqn:?.
+    simpl in *. assert (Permutation (es ++ a :: ef) (a :: (es ++ ef))).
+    rewrite Permutation_middle. auto.
+    eapply first_choices_perm in H1; eauto.
+    clear H0.
+    inv H1.
+    * apply next_ranking_selected in Heqo; auto.
+      eapply sf_spec.selected_candidate_unique in Heqo; eauto. subst.
+      assert (l = fst ( sf_imp.option_split
+           (map (sf_imp.next_ranking candidate reldec_candidate r) ef))).
+     rewrite Heqp. auto.
+     subst. 
+Admitted. *)
+
+Lemma tabulate'_first_choices_complete : forall l cd ct r,
+ct <> 0 ->
+sf_spec.first_choices _ (in_record r) cd l ct ->
+In (cd, ct) (sf_imp.tabulate' _ _ 
+   (fst (sf_imp.option_split (map (sf_imp.next_ranking _ _ r) l)))).
+Proof.
+intros.
+unfold sf_imp.tabulate'.
+rewrite <- (app_nil_l l) in H0.
+eapply tabulate''_first_choices_complete; eauto; try solve [constructor].
+intros. inv H2. congruence.
+Qed.
+
+Lemma tabulate_first_choices_complete : forall l cd ct r,
+ct <> 0 -> 
+sf_spec.first_choices _ (in_record r) cd l ct ->
+In (cd, ct) (fst (sf_imp.tabulate _ _ r l)). 
+  intros.
+  unfold sf_imp.tabulate.
+  destruct (sf_imp.option_split
+               (map (sf_imp.next_ranking candidate reldec_candidate r) l)) eqn:?.
+  eapply Permutation_in.
+  apply insertion_sort_permutation.
+  assert (l0 = fst (sf_imp.option_split
+           (map (sf_imp.next_ranking candidate reldec_candidate r) l))).
+  rewrite Heqp. auto.
+  subst.
+  eapply tabulate'_first_choices_complete. auto.
+  auto.
+Qed.
+
+
+Lemma cnlt_trans : Relations_1.Transitive (boolCmpToProp (sf_imp.cnlt candidate)).
+Proof.
+intro. intros.
+destruct x, y, z.
+unfold boolCmpToProp in *. simpl in *.
+generalize dependent n0. revert n1.
+induction n; intros.
+simpl in *. auto.
+simpl in *. destruct n0. inv H.
+simpl in *.
+destruct n1. auto.
+eapply IHn; eauto.
+Qed.
+
+
+Lemma get_bottom_votes_is_loser :
+forall election rec losers rs election'
+(ELIMO : forall c, sf_spec.participates _ c election -> sf_spec.first_choices _ (in_record rec) c election 0 ->
+           (in_record rec c)),
+sf_imp.tabulate _ _ rec election = (rs, election') ->
+sf_imp.get_bottom_votes  _ rs = losers ->
+Forall (sf_spec.is_loser candidate (in_record rec) election) losers.
+Proof.
+intros.
+destruct (sf_imp.tabulate _ _ rec election) eqn:?. inv H.
+destruct rs. 
+- simpl in *. auto.
+- simpl in *. destruct p. rewrite <- EqNat.beq_nat_refl.
+  simpl. rewrite Forall_forall.
+  intros. simpl in *.
+  destruct H. 
+  + subst. assert (SRTD := tabulate_sorted _ _ _ _ Heqp).
+    apply Sorted_StronglySorted in SRTD.
+    *    assert (CRCT := tabulate_correct _ _ _ _ Heqp).
+         rewrite Forall_forall in CRCT.
+         specialize (CRCT (x, n)). intuition.
+         simpl in *. intuition. clear H0.
+         inv SRTD.
+         unfold sf_spec.is_loser.
+         { repeat split.
+           - unfold sf_imp.tabulate in Heqp. unfold
+                                           sf_imp.tabulate' in Heqp.
+             destruct (sf_imp.option_split
+                         (map (sf_imp.next_ranking candidate reldec_candidate rec)
+                              election)) eqn:?.
+             inv Heqp.
+             assert (PRM := insertion_sort_permutation ((sf_imp.tabulate'' candidate reldec_candidate l [])) 
+                                                       (sf_imp.cnlt candidate)).
+             eapply Permutation_sym in PRM.
+             eapply Permutation_in in PRM.
+             instantiate (1 := (x, n)) in PRM.
+             eapply tabulate''_continuing. instantiate (1 := nil). instantiate (1 := election). 
+             erewrite Heqp0. simpl. eauto.
+             constructor.
+             rewrite H0. constructor. auto.
+           - admit. (*TODO: need a lemma*)
+           - intros. eapply sf_first_choices_unique in H4; [ | apply H1]. subst.
+             rewrite Forall_forall in H3.
+             unfold sf_spec.participates in H0.
+             destruct H0.
+             destruct H0. destruct H4. destruct H4.
+             destruct (NPeano.Nat.eq_dec n0 m). omega.
+             cut (In (c', m) rs). intros.
+             apply H3 in H7. unfold boolCmpToProp in H7.
+             simpl in *. destruct (NPeano.leb n0 m) eqn:?; try contradiction.
+             apply NPeano.leb_le in Heqb. auto. 
+             edestruct (rel_dec_p c' x).
+             subst.
+             eapply sf_first_choices_unique in H5; [ | apply H1]. intuition.
+             apply tabulate_first_choices_complete in H5.  
+             rewrite Heqp in H5. simpl in H5. 
+             destruct H5. congruence. auto.
+             intro.
+             subst.
+             eapply ELIMO in H5. auto.
+             admit. (*same lemma as admit above*)
+         } 
+    *  apply cnlt_trans.
+  + assert (In (x, n) (filter
+              (fun x0 : candidate * nat =>
+               let (_, v') := x0 in EqNat.beq_nat n v') rs)).
+    rewrite filter_In. split.
+    * rewrite in_map_iff in H. destruct H. destruct x0. simpl in H. intuition.
+      subst. rewrite filter_In in H1. intuition.
+      apply EqNat.beq_nat_true in H0. subst.
+      auto.
+    * symmetry. apply EqNat.beq_nat_refl.
+    * clear H.
+      rewrite filter_In in H0. destruct H0.
+      assert (SRTD := tabulate_sorted _ _ _ _ Heqp).
+      apply Sorted_StronglySorted in SRTD.
+      assert (CRCT := tabulate_correct _ _ _ _ Heqp).
+      rewrite Forall_forall in CRCT.
+      inv SRTD.
+      simpl in *. specialize (CRCT ((x, n))).
+      intuition. clear H1.
+      unfold sf_spec.is_loser.
+      split.
+      admit. (*TODO*)
+      split. admit.
+      intros.
+      eapply sf_first_choices_unique in H5; eauto. subst.
+      rewrite Forall_forall in H4.
+      specialize (H4 (c', m)).
+      destruct (rel_dec_p c c').
+      subst.
+      assert (CRCT := tabulate_correct _ _ _ _ Heqp).
+      rewrite Forall_forall in CRCT.
+      specialize (CRCT (c', n)). simpl in CRCT. intuition.
+      clear H8. 
+      eapply sf_first_choices_unique in H7; eauto.
+      subst.
+      auto.
+      assert (In (c', m) rs).
+      apply tabulate_first_choices_complete in H7.
+      rewrite Heqp in *. simpl in H7. destruct H7.
+      inv H5. intuition.
+      auto.
+      intro.
+      subst.
+      apply ELIMO in H7; auto.
+      intuition.
+      unfold boolCmpToProp in H8. simpl in H8.
+      destruct (NPeano.leb n m) eqn:?; intuition.
+      apply NPeano.Nat.leb_le in Heqb. auto.
+      apply cnlt_trans.
+Qed.
+      
+      
+      
+
+
+
 
 Lemma selected_not_eliminated 
   unfold sf_spec.exhausted_ballot in H1. 
