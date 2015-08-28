@@ -104,7 +104,9 @@ Section ranked_preference_voting_properties.
   | count_not_satisfies : forall b e n,
         ~P b ->
         count_votes P e n ->
-        count_votes P (b::e) n.
+        count_votes P (b::e) n
+  | count_nil :
+      count_votes P nil 0.
 
   Definition total_votes e n :=
     count_votes (fun b => exists c, first_choice c b) e n.
