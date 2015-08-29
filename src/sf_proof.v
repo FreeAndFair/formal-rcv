@@ -1154,12 +1154,6 @@ induction ef; intros.
     eauto.
 Qed.
 
-Lemma sf_first_choices_unique : forall (c : candidate) eliminated e n1 n2,
-    sf_spec.first_choices _ eliminated c e n1 ->
-    sf_spec.first_choices _ eliminated c e n2 ->
-    n1 = n2.
-Admitted.
-
 Lemma tabulate''_first_choices_complete : forall ef cd ct es running r
 (NODUP : NoDup (fst (split running))), 
 (forall cnd cnt, 
@@ -1282,25 +1276,28 @@ destruct rs.
              constructor.
              rewrite H0. constructor. auto.
            - admit. (*TODO: need a lemma*)
-           - intros. eapply sf_first_choices_unique in H4; [ | apply H1]. subst.
+           - intros.
+             assert (n = n0); [ | subst n0 ].
+             { eapply sf_spec.sf_first_choices_unique in H0; [ | apply H1]. auto. }
              rewrite Forall_forall in H3.
-             unfold sf_spec.participates in H0.
-             destruct H0.
-             destruct H0. destruct H4. destruct H4.
-             destruct (NPeano.Nat.eq_dec n0 m). omega.
+             destruct H.
+             unfold sf_spec.participates in H5.
+             destruct H5.
+             destruct H5. destruct H6. destruct H6.
+             destruct (NPeano.Nat.eq_dec n m). omega.
              cut (In (c', m) rs). intros.
-             apply H3 in H7. unfold boolCmpToProp in H7.
-             simpl in *. destruct (NPeano.leb n0 m) eqn:?; try contradiction.
+             apply H3 in H8. unfold boolCmpToProp in H8.
+             simpl in *. destruct (NPeano.leb n m) eqn:?; try contradiction.
              apply NPeano.leb_le in Heqb. auto. 
              edestruct (rel_dec_p c' x).
              subst.
-             eapply sf_first_choices_unique in H5; [ | apply H1]. intuition.
-             apply tabulate_first_choices_complete in H5.  
-             rewrite Heqp in H5. simpl in H5. 
-             destruct H5. congruence. auto.
+             eapply sf_spec.sf_first_choices_unique in H4; [ | apply H1]. intuition.
+             apply tabulate_first_choices_complete in H4. 
+             rewrite Heqp in H4. simpl in H4. 
+             destruct H4. congruence. auto.
              intro.
              subst.
-             eapply ELIMO in H5. auto.
+             eapply ELIMO in H4. auto.
              admit. (*same lemma as admit above*)
          } 
     *  apply cnlt_trans.
@@ -1324,10 +1321,11 @@ destruct rs.
       intuition. clear H1.
       unfold sf_spec.is_loser.
       split.
+      split.
       admit. (*TODO*)
-      split. admit.
-      intros.
-      eapply sf_first_choices_unique in H5; eauto. subst.
+      admit.
+      intros ? ? ? [??] ? ?.
+      eapply sf_spec.sf_first_choices_unique in H5; eauto. subst.
       rewrite Forall_forall in H4.
       specialize (H4 (c', m)).
       destruct (rel_dec_p c c').
@@ -1335,8 +1333,8 @@ destruct rs.
       assert (CRCT := tabulate_correct _ _ _ _ Heqp).
       rewrite Forall_forall in CRCT.
       specialize (CRCT (c', n)). simpl in CRCT. intuition.
-      clear H8. 
-      eapply sf_first_choices_unique in H7; eauto.
+      clear H8.
+      eapply sf_spec.sf_first_choices_unique in H7; eauto.
       subst.
       auto.
       assert (In (c', m) rs).
