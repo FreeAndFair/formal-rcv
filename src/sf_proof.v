@@ -1240,6 +1240,115 @@ destruct n1. auto.
 eapply IHn; eauto.
 Qed.
 
+Lemma selected_participates : forall election (c : candidate) bal  r,
+sf_spec.selected_candidate _ r bal c ->
+In bal election ->
+sf_spec.participates _ c election.
+Proof.
+induction election; intros.
+inv H0.
+destruct H0. subst.
+unfold sf_spec.participates.
+unfold sf_spec.selected_candidate in H.
+destruct H. destruct H0.
+exists bal. split; eauto.
+simpl. auto.
+exists x. intuition.
+apply next_ranking_in in H1. auto.
+eapply IHelection in H0.
+unfold sf_spec.participates in H0.
+unfold sf_spec.participates.
+simpl in *.
+destruct H0.
+exists x. split; auto. intuition.
+destruct H0.
+apply H1.
+eauto.
+Qed.
+
+Lemma participates_cons : forall e a (c : candidate) ,
+        sf_spec.participates _ c [a] \/ sf_spec.participates _ c e <->
+        sf_spec.participates _ c (a :: e).
+Proof.
+split.
+- intros.
+  destruct H.
+  + unfold sf_spec.participates in *.
+    destruct H. destruct H. destruct H0. destruct H0.
+    exists a. simpl in *. intuition.
+    subst. exists x0. auto.
+  + unfold sf_spec.participates in *. 
+    destruct  H. intuition. destruct H1. exists x; intuition.
+    exists x0; intuition.
+- intros. destruct H.
+  destruct H. destruct H0.
+  destruct H.
+  +  unfold sf_spec.participates.
+     subst. left. exists x. intuition.
+     exists x0; auto.
+  +  right. unfold sf_spec.participates.
+     exists x. intuition.
+     exists x0; auto.
+Qed.
+
+Lemma tabulate''_participates : forall x election n rec,
+In (x, n) (sf_imp.tabulate'' _ _ (fst (sf_imp.option_split 
+                                        (map (sf_imp.next_ranking candidate reldec_candidate rec) 
+                                             election))) nil) ->
+sf_spec.participates candidate x election.
+Proof.
+induction election; intros.
+- simpl in *. inv H.
+- simpl in *.
+  destruct (sf_imp.next_ranking candidate reldec_candidate rec a) eqn:?.
+  + destruct p. 
+    destruct ( sf_imp.option_split
+                 (map
+                    (sf_imp.next_ranking candidate reldec_candidate rec)
+                    election)) eqn:?.
+    simpl in *.
+    destruct (rel_dec_p c x).
+    * subst.
+      apply next_ranking_selected in Heqo.
+      eapply selected_participates. eauto. 
+      simpl. auto.
+    * apply participates_cons. right.
+      eapply IHelection. instantiate (2 := n).
+      assert (fst (sf_imp.option_split
+                     (map (sf_imp.next_ranking candidate reldec_candidate rec) election)) = l).
+      rewrite Heqp; auto. subst.
+      eapply tabulate''_same_notin. instantiate (1 := [(c,1)]). 
+      repeat constructor. auto. constructor.
+      intro. simpl in H0. intuition. auto.
+      apply H.
+  + destruct (sf_imp.option_split
+                     (map
+                        (sf_imp.next_ranking candidate reldec_candidate rec)
+                        election)) eqn:?.
+    simpl in H. assert (l = (fst (sf_imp.option_split
+           (map (sf_imp.next_ranking candidate reldec_candidate rec) election)))).
+    rewrite Heqp. auto.
+    subst.
+    apply participates_cons. right.
+    eapply IHelection. eauto.
+Qed.
+
+Lemma tabulate_participates : forall x n election rec,
+In (x, n) (fst (sf_imp.tabulate _ _ rec election)) ->
+sf_spec.participates candidate x election.
+intros. unfold sf_imp.tabulate in *.
+destruct (sf_imp.option_split
+                  (map (sf_imp.next_ranking candidate reldec_candidate rec)
+                     election)) eqn:?.
+simpl in *.
+assert (l = fst (sf_imp.option_split
+           (map (sf_imp.next_ranking candidate reldec_candidate rec) election))).
+rewrite Heqp. auto.
+subst. clear Heqp. 
+eapply Permutation_in in H.
+eapply tabulate''_participates. apply H.
+symmetry. apply insertion_sort_permutation.
+Qed.
 
 Lemma get_bottom_votes_is_loser :
 forall election rec losers rs election'
@@ -1281,7 +1390,8 @@ destruct rs.
              erewrite Heqp0. simpl. eauto.
              constructor.
              rewrite H0. constructor. auto.
-           - admit. (*TODO: need a lemma*)
+           - eapply tabulate_participates; eauto. instantiate (1:=rec). rewrite Heqp.
+             simpl. left. reflexivity.
            - intros. eapply sf_first_choices_unique in H4; [ | apply H1]. subst.
              rewrite Forall_forall in H3.
              unfold sf_spec.participates in H0.
@@ -1301,6 +1411,8 @@ destruct rs.
              intro.
              subst.
              eapply ELIMO in H5. auto.
+             eapply tabulate_participates; eauto. instantiate (1:=rec). rewrite Heqp.
+             simpl. right. 
              admit. (*same lemma as admit above*)
          } 
     *  apply cnlt_trans.

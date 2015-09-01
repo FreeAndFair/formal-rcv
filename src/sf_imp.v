@@ -160,19 +160,30 @@ Fixpoint find_eliminated' (eliminated : list candidate) (votes : list (candidate
 
 Definition find_eliminated votes :=
   find_eliminated' [] votes 0.
-                      
+
+Definition find_eliminated_noopt votes :=
+  get_bottom_votes votes.
+
+Fixpoint last_item votes : option (candidate * nat) :=
+match votes with
+| h :: [] => Some h
+| [] => None
+| h :: t => last_item t
+end.
+
 Fixpoint run_election' (elect : election) (rec : record) (fuel : nat) :  (option candidate * record) :=
 match fuel with
 | S n' => let (ranks, elect') := (tabulate rec elect) in
           let win_threshhold := (length elect') / 2 in (* here we use elect' because exhausted ballots
                                                           have been removed *) 
-          match ranks with
-          | (cand1, cand1_votes) :: _ => 
+          match last_item ranks with
+          | Some (cand1, cand1_votes)  => 
             if (gtb_nat cand1_votes win_threshhold) then
               (Some cand1, rec)
+
             else
-              run_election' elect' (find_eliminated (rev ranks) :: rec) n'
-          | nil => (None, rec)
+              run_election' elect' (find_eliminated_noopt (rev ranks) :: rec) n'
+          | None => (None, rec)
           end
 | _ => (None, rec)
 end.
