@@ -183,11 +183,9 @@ Section ranked_preference_voting_properties.
 
     Definition participation_criterion :=
       forall b e c1 c2,
-        c1 <> c2 ->
         prefers c1 c2 b ->
         may_win_election c1 e ->
-        may_win_election c2 (b :: e) ->
-        False.
+        may_win_election c1 (b :: e).
 
   End criteria_definitions.
 
@@ -200,6 +198,7 @@ Section ranked_preference_voting_properties.
     * apply count_satisfies; auto. apply HPQ; auto.
     * apply count_not_satisfies; auto.
       intro; apply H. apply HPQ; auto.
+    * apply count_nil.
   Qed.
 
  Lemma count_monotone (P Q:ballot -> Prop) (e:election) :
@@ -217,6 +216,7 @@ Section ranked_preference_voting_properties.
       apply count_satisfies; auto.
       exists n'; split; auto.
       apply count_not_satisfies; auto.
+    * exists 0. split; auto. apply count_nil.
   Qed.
 
   Theorem mutual_majority_implies_majority rule :
@@ -248,7 +248,9 @@ Section ranked_preference_voting_properties.
         elim H1.
   Qed.
 
-  (* Admitted for now.  This fact is widely clamed, but I'm not sure offhand how to prove it. *)
+  (** Admitted for now.  This fact is widely clamed,
+      but I'm not sure offhand how to prove it.
+  *)
   Theorem condorcet_winner_later_no_harm_incompatible rule :
     condorcet_winner_criterion rule ->
     later_no_harm_criterion rule ->

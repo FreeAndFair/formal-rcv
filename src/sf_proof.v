@@ -1154,12 +1154,6 @@ induction ef; intros.
     eauto.
 Qed.
 
-Lemma sf_first_choices_unique : forall (c : candidate) eliminated e n1 n2,
-    sf_spec.first_choices _ eliminated c e n1 ->
-    sf_spec.first_choices _ eliminated c e n2 ->
-    n1 = n2.
-Admitted.
-
 Lemma tabulate''_first_choices_complete : forall ef cd ct es running r
 (NODUP : NoDup (fst (split running))), 
 (forall cnd cnt, 
@@ -1392,28 +1386,31 @@ destruct rs.
              rewrite H0. constructor. auto.
            - eapply tabulate_participates; eauto. instantiate (1:=rec). rewrite Heqp.
              simpl. left. reflexivity.
-           - intros. eapply sf_first_choices_unique in H4; [ | apply H1]. subst.
+           - intros.
+             assert (n = n0); [ | subst n0 ].
+             { eapply sf_spec.sf_first_choices_unique in H0; [ | apply H1]. auto. }
              rewrite Forall_forall in H3.
-             unfold sf_spec.participates in H0.
-             destruct H0.
-             destruct H0. destruct H4. destruct H4.
-             destruct (NPeano.Nat.eq_dec n0 m). omega.
+             destruct H.
+             unfold sf_spec.participates in H5.
+             destruct H5.
+             destruct H5. destruct H6. destruct H6.
+             destruct (NPeano.Nat.eq_dec n m). omega.
              cut (In (c', m) rs). intros.
-             apply H3 in H7. unfold boolCmpToProp in H7.
-             simpl in *. destruct (NPeano.leb n0 m) eqn:?; try contradiction.
+             apply H3 in H8. unfold boolCmpToProp in H8.
+             simpl in *. destruct (NPeano.leb n m) eqn:?; try contradiction.
              apply NPeano.leb_le in Heqb. auto. 
              edestruct (rel_dec_p c' x).
              subst.
-             eapply sf_first_choices_unique in H5; [ | apply H1]. intuition.
-             apply tabulate_first_choices_complete in H5.  
-             rewrite Heqp in H5. simpl in H5. 
-             destruct H5. congruence. auto.
+             eapply sf_spec.sf_first_choices_unique in H4; [ | apply H1]. intuition.
+             apply tabulate_first_choices_complete in H4. 
+             rewrite Heqp in H4. simpl in H4. 
+             destruct H4. congruence. auto.
              intro.
              subst.
-             eapply ELIMO in H5. auto.
-             eapply tabulate_participates; eauto. instantiate (1:=rec). rewrite Heqp.
-             simpl. right. 
-             admit. (*same lemma as admit above*)
+             eapply ELIMO in H4. auto.
+             unfold sf_spec.participates.
+             exists x0.
+             eauto.
          } 
     *  apply cnlt_trans.
   + assert (In (x, n) (filter
@@ -1435,11 +1432,12 @@ destruct rs.
       simpl in *. specialize (CRCT ((x, n))).
       intuition. clear H1.
       unfold sf_spec.is_loser.
+split.
       split.
       admit. (*TODO*)
-      split. admit.
-      intros.
-      eapply sf_first_choices_unique in H5; eauto. subst.
+      admit.
+      intros ? ? ? [??] ? ?.
+      eapply sf_spec.sf_first_choices_unique in H5; eauto. subst.
       rewrite Forall_forall in H4.
       specialize (H4 (c', m)).
       destruct (rel_dec_p c c').
@@ -1447,8 +1445,8 @@ destruct rs.
       assert (CRCT := tabulate_correct _ _ _ _ Heqp).
       rewrite Forall_forall in CRCT.
       specialize (CRCT (c', n)). simpl in CRCT. intuition.
-      clear H8. 
-      eapply sf_first_choices_unique in H7; eauto.
+      clear H8.
+      eapply sf_spec.sf_first_choices_unique in H7; eauto.
       subst.
       auto.
       assert (In (c', m) rs).
@@ -1465,33 +1463,32 @@ destruct rs.
       apply NPeano.Nat.leb_le in Heqb. auto.
       apply cnlt_trans.
 Qed.
-      
-      
-      
-
-
-
-
-Lemma selected_not_eliminated 
-  unfold sf_spec.exhausted_ballot in H1. 
-  Check next_ranking_selected.
-Fixpoint find_eliminated' (eliminated : list candidate) (votes : list (candidate * nat)) (sum : nat) :=
-
 
 Lemma run_election'_correct : forall fuel election winner tb rec rec',
     sf_imp.run_election' candidate _ tb election rec fuel = (Some winner, rec') ->
     sf_spec.winner candidate election (in_record []) winner.
 induction fuel; intros.
-simpl in *. congruence.
-simpl in *.
+- simpl in *. congruence.
+- simpl in *. destruct (sf_imp.tabulate candidate reldec_candidate rec election) eqn:?; 
+                       simpl in *; try congruence.
+  destruct l; try congruence.
+  destruct p.
+  simpl in *.
+  destruct (sf_imp.gtb_nat n (fst (NPeano.divmod (length e) 1 0 1))) eqn:?.
+  + inv H.f
+    apply sf_spec.winner_now. unfold sf_spec.majority.
+    intros. 
 Admitted.
 
+Lemma tabulate_total_selected : forall r election l election' vs,
+sf_imp.tabulate _ _ r election = (vs, election') ->
+sf_spec.total_selected candidate 
 
 
 Theorem run_election_correct : forall election winner tb rec, 
     sf_imp.run_election candidate _ tb election = (Some winner, rec) ->
     sf_spec.winner candidate (tb_func_to_Prop tb) election (in_record []) winner.
 intros. unfold sf_imp.run_election in H. apply run_election'_correct in H. auto.
-Qed.
+Qed.y
 
 

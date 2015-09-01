@@ -23,7 +23,6 @@ Section election_spec.
   Definition ballot := list rankSelection.
   Definition election := list ballot.
   Definition contestants := list candidate.
-(*  Variable tiebreak : list candidate -> candidate -> Prop. *)
   
   Section ballot_properties.
     (**  At any given round of a tabulation, some collection of candidates
@@ -82,6 +81,7 @@ Section election_spec.
       exists r, next_ranking b r /\ In c r.
 
 
+
     (** If a candidate receives a majority of the first choices, that
 candidate shall be declared elected.*)
 
@@ -95,20 +95,33 @@ candidate shall be declared elected.*)
                                                  first_choices c (h::t) n.
 
 
-    (* this may not even be useful *)
-   
+    Lemma sf_first_choices_unique : forall e c n1 n2,
+        first_choices c e n1 ->
+        first_choices c e n2 ->
+        n1 = n2.
+    Proof.
+      induction e.
+      * intros. inversion H. inversion H0. auto.
+      * intros.
+        inversion H; clear H; subst;
+        inversion H0; clear H0; subst; try contradiction.
+        f_equal; eauto.
+        eauto.
+    Qed.
 
-    Definition all_candidates (e : election) (c : list candidate) :=
-      NoDup c /\ Forall (Forall (Forall (fun x => In x c))) e.
-    
-    Definition most_votes (e : election) (winner : candidate) :=
-      forall candidates, all_candidates e candidates ->
-                         Forall 
-                           (fun candidate => (exists n n_winner, (first_choices candidate e n) ->
-                                                                 (first_choices winner e n_winner) ->
-                                                                 n < n_winner) \/
-                                             candidate = winner) candidates. 
-    
+    Lemma sf_first_choices_total : forall e c, exists n,
+        first_choices c e n.
+    Proof.
+      induction e.
+      * intros. exists 0. apply first_choices_nil.
+      * intros.
+        destruct (IHe c) as [n ?].
+        destruct (classic (selected_candidate a c)).
+        exists (S n). apply first_choices_selected; auto.
+        exists n. apply first_choices_not_selected; auto.
+    Qed.
+
+   
     Inductive total_selected : election -> nat -> Prop :=
     | total_nil : total_selected nil 0
     | total_continuing : forall b e' n, continuing_ballot b ->
@@ -120,7 +133,7 @@ candidate shall be declared elected.*)
 
     Definition majority (e : election) (winner : candidate) :=
       forall total_votes winner_votes, 
-        (total_selected e total_votes) ->
+        total_selected e total_votes ->
         first_choices winner e winner_votes ->
         (winner_votes * 2) > total_votes.
 
@@ -129,38 +142,22 @@ majority, the candidate who received the fewest first choices shall be
 eliminated and each vote cast for that candidate shall be transferred to
 the next ranked candidate on that voter's ballot. *)
 
-  Definition participates (c:candidate) (e:election) :=
-    exists b, In b e /\ exists r, In r b /\ In c r.
+    Definition participates (c:candidate) (e:election) :=
+      exists b, In b e /\ exists r, In r b /\ In c r.
 
-  Definition is_loser (e:election) (loser:candidate) :=
-    ~eliminated loser /\
-    participates loser e /\
-    forall c' n m,
-      ~eliminated c' ->
-      participates c' e ->
-      first_choices loser e n ->
-      first_choices c' e m ->
-      n <= m.
+    Definition viable_candidate (e:election) (c:candidate) :=
+      ~eliminated c /\ participates c e.
+
+    Definition is_loser (e:election) (loser:candidate) :=
+      viable_candidate e loser /\
+      forall c' n m,
+        viable_candidate e c' ->
+        first_choices loser e n ->
+        first_choices c' e m ->
+        n <= m.
 
     Definition no_majority (e : election) :=
-      forall c, 
-        all_candidates e c ->
-        Forall (fun candidate => ~majority e candidate) c.
-
-(*
-    Definition possibly_eliminated_candidates 
-               (e : election) (losers : list candidate) :=
-      forall c, all_candidates e c ->
-      exists n_loser, (Forall (fun cd => first_choices cd e n_loser) losers) /\ 
-                      Forall (fun cd => exists n, first_choices cd e n ->
-                                                  n_loser < n \/ 
-                                                  In cd losers) c. 
-
-    Definition eliminated_candidate (e : election) (loser : candidate) :=
-      forall losers, 
-        possibly_eliminated_candidates e losers /\ tiebreak losers loser. 
-*)
-    
+      ~(exists c, majority e c).
 
     (**  Every ballot has at most one next ranking.
      *)
@@ -214,7 +211,7 @@ The formal specification above counts this situation as a vote for D.
 *)
 
     (**  Whenever a ballot selects a candidate, that candidate
-         is not yet eliminated.
+         is viable.
       *)
     Lemma selected_candidate_not_eliminated (b:ballot) :
       forall c, selected_candidate b c -> ~eliminated c.
