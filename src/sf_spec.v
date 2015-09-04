@@ -47,27 +47,177 @@ Section election_spec.
          (if it exists) which contains at least one
          continuing candidate.
       *)
-    Fixpoint next_ranking (b:ballot) (r:rankSelection) : Prop :=
-       match b with
-         | nil => False
-         | r'::b' =>
-           ((forall c, In c r' -> eliminated c) /\ next_ranking b' r)
-           \/
-           ((exists c, In c r' /\ ~eliminated c) /\ r = r')
-         end.
-           
-    (**  A ballot is an overvote if its next ranking contains
+
+    Definition overvote (r : rankSelection) := 
+       exists c1 c2, In c1 r /\ In c2 r /\ c1 <> c2.
+
+    Inductive next_ranking : ballot -> rankSelection -> Prop :=
+    | next_ranking_eliminated : forall b r r', 
+        Forall eliminated r' ->
+        ~overvote r' ->
+        next_ranking b r ->
+        next_ranking (r' :: b) r
+    | next_ranking_valid : forall b r c,
+        In c r  ->
+        (overvote r \/ ~eliminated c) ->
+        next_ranking (r :: b) r.
+
+    Definition properly_selects r c :=
+      Forall (eq c) r /\ In c r /\ ~eliminated c.
+
+    Definition does_not_select r :=
+      r = nil \/ (exists c, Forall (eq c) r /\ In c r /\ eliminated c).
+
+    Lemma not_overvote_cons :
+      forall h t,
+        ~overvote (h :: t) ->
+        Forall (eq h) t /\ ~overvote t.
+    Proof.
+      induction t; intros.
+      - split. 
+        + constructor.
+        + intro. unfold overvote in H0.
+          destruct H0. destruct H0.
+          intuition.
+      -split.
+        + constructor.
+          destruct (classic (h = a)).
+          * auto.
+          * exfalso.
+            apply H.
+            unfold overvote.
+            exists h. exists a. intuition.
+          * unfold overvote in H.
+            apply IHt.
+            intro.
+            apply H.
+            clear H.
+            destruct H0.
+            destruct H.
+            exists x. exists x0.
+            simpl in *. intuition.
+        + intuition.
+          apply H; clear H.
+          unfold overvote in H0.
+          destruct H0.
+          destruct H.
+          destruct H.
+          destruct H0.
+          unfold overvote.
+          exists x. exists x0.
+          intuition.
+    Qed.
+
+    Lemma not_overvote_all_same :
+      forall r c,
+        ~overvote r ->
+        In c r ->
+        Forall (eq c) r.
+    Proof.
+      induction r; intros.
+      - inversion H0.
+      - apply not_overvote_cons in H.
+        intuition. destruct H0. subst.
+        rewrite Forall_forall. intros. simpl in *.
+        intuition. assert (In x r) by auto.
+        eapply IHr in H0; eauto.
+        rewrite Forall_forall in *.
+        specialize (H0 x).
+        specialize (H1 x). intuition.
+        constructor; intuition.
+        rewrite Forall_forall in H1. specialize (H1 c).
+        intuition. 
+    Qed.
+
+    Lemma ranking_cases : forall r,
+    overvote r \/ (exists c, properly_selects r c) \/ does_not_select r.
+    intros.
+    destruct r. 
+    - right. right. left. auto.
+    - destruct (classic (overvote (c :: r))).
+      + auto.
+      + right. destruct (classic (eliminated c)).
+        * right. right. exists c. simpl. intuition.
+          apply not_overvote_all_same; simpl; auto.
+        * left. exists c. repeat split; auto.
+          apply not_overvote_all_same; simpl; auto.
+          simpl; auto.
+    Qed.
+
+    Lemma next_ranking_not_not_selects : forall b r,
+        next_ranking b r ->
+        ~does_not_select r.
+    Proof.
+      intros. 
+      induction H. 
+      - auto.
+      - intro.
+        unfold does_not_select in *.
+        destruct H1. subst. elim H.
+        destruct H1.
+        destruct H1.
+        rewrite Forall_forall in H1.
+        apply H1 in H. subst. intuition.
+        unfold overvote in *.
+        destruct H2. destruct H0. intuition. apply H5. transitivity c; eauto. 
+        symmetry. eauto.
+    Qed.
+
+    Lemma next_ranking_spec : forall b r,
+        next_ranking b r -> 
+        overvote r \/ (exists c, properly_selects r c).
+    Proof.
+      intros.
+      destruct (ranking_cases r); intuition.
+      apply next_ranking_not_not_selects in H.
+      intuition.
+    Qed. 
+      
+    (**  TODO: Do we need a notion of overvote for a ballot any more?
+         A ballot is an overvote if its next ranking contains
          two distinct candidates.
       *)
-    Definition overvote (b:ballot) : Prop :=
+   (* Definition overvote (b:ballot) : Prop :=
       exists r, next_ranking b r /\
-         exists c1 c2, In c1 r /\ In c2 r /\ c1 <> c2.
+         exists c1 c2, In c1 r /\ In c2 r /\ c1 <> c2.*)
 
     (**  A ballot is exhausted if it selects no vaiable candidates
          or is an overvote 
       *)
+
     Definition exhausted_ballot (b:ballot) :=
-      no_viable_candidates b \/ overvote b.
+      (~ exists r, next_ranking b r ) \/ 
+      (exists r, next_ranking b r /\ overvote r). 
+    
+    Ltac inv H := inversion H; subst; clear H.
+    Lemma next_ranking_unique : forall b r1 r2,
+        next_ranking b r1 ->
+        next_ranking b r2 ->
+        r1= r2.
+    Proof. 
+      intros.
+      induction b.
+      inversion H.
+      inv H; inv H0; try rewrite Forall_forall in *; intuition.
+    Qed. 
+
+    Lemma exhausted_ballot_next_ranking_iff : forall (b : ballot),
+          exhausted_ballot b <-> forall r, next_ranking b r -> overvote r.
+    Proof. 
+      intros.
+      split; intros.
+      - unfold exhausted_ballot in H.
+        intuition. exfalso.
+        apply H1. exists r. auto.
+        destruct H1. destruct H. eapply next_ranking_unique in H0; eauto.
+        subst; auto.
+      - unfold exhausted_ballot.
+        destruct (classic (exists r, next_ranking b r)).
+        destruct H0. right.
+        exists x. auto.
+        left. auto.
+    Qed.
+          
 
     Definition continuing_ballot (b:ballot) :=
       ~exhausted_ballot b.
@@ -131,6 +281,17 @@ candidate shall be declared elected.*)
                                        total_selected e' n ->
                                        total_selected (b :: e') (n).
 
+    Lemma total_selected_total : forall e,
+        exists n, total_selected e n.
+    Proof. 
+      induction e; intros.
+      - exists 0; constructor.
+      - destruct IHe.
+        destruct (classic (exhausted_ballot a)).
+        + exists x; constructor; auto. 
+        + exists (S x). apply total_continuing; auto.
+    Qed.
+
     Definition majority (e : election) (winner : candidate) :=
       forall total_votes winner_votes, 
         total_selected e total_votes ->
@@ -159,18 +320,6 @@ the next ranked candidate on that voter's ballot. *)
     Definition no_majority (e : election) :=
       ~(exists c, majority e c).
 
-    (**  Every ballot has at most one next ranking.
-     *)
-    Lemma next_ranking_unique (b:ballot) r1 r2 :
-      next_ranking b r1 ->
-      next_ranking b r2 ->
-      r1 = r2.
-    Proof.
-      induction b; simpl; intuition.
-      destruct H0 as [?[??]]; firstorder.
-      destruct H as [?[??]]; firstorder.
-      subst; auto.
-    Qed.
 
     (**  Every ballot selects at most one candidate.
      *)
@@ -185,8 +334,7 @@ the next ranked candidate on that voter's ballot. *)
       assert (r1 = r2) by (apply (next_ranking_unique b); auto).
       subst r2.
       destruct (classic (c1=c2)); auto.
-      elim Hb. red. right.
-      red; firstorder.
+      elim Hb. red. right. firstorder.
     Qed.
 
     (**
@@ -218,7 +366,7 @@ The formal specification above counts this situation as a vote for D.
     Proof.
       induction b.
       unfold selected_candidate. intros c [Hc [r [??]]].
-      elim H.
+(*      elim H.
       intros c [Hc [r [??]]].
       destruct H as [[??]|[??]].
       apply IHb.
@@ -252,8 +400,8 @@ The formal specification above counts this situation as a vote for D.
       simpl.
       right.
       split; auto. exists c'; split; auto.
-      exists c, c'. intuition.
-    Qed.
+      exists c, c'. intuition. TODO: FIX*)
+    Admitted.
 
   End ballot_properties.
 
