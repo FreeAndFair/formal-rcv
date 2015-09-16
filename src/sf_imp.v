@@ -69,7 +69,7 @@ end.
 Definition tabulate' (rs : list (option candidate)) :=
 tabulate'' rs nil.
 
-Definition cnlt (a b : (candidate * nat)) : bool :=
+Definition cnle (a b : (candidate * nat)) : bool :=
 match a, b with
 (_, n1), (_, n2) => NPeano.leb n1 n2
 end.
@@ -105,7 +105,7 @@ Definition tabulate (rec : record) (elect : election) : ((list (candidate * nat)
 let get_candidates := (map (next_ranking rec) elect) in
 let (next_ranks, next_election) := option_split (get_candidates) in
 let counts := tabulate' next_ranks in
-let sorted_ranks := insertionsort cnlt counts in
+let sorted_ranks := insertionsort cnle counts in
 (sorted_ranks, drop_none next_election).
 
 Definition gtb_nat (a b : nat) : bool:=
@@ -162,7 +162,10 @@ Definition find_eliminated votes :=
   find_eliminated' [] votes 0.
 
 Definition find_eliminated_noopt votes :=
-  get_bottom_votes votes.
+  match break_tie (get_bottom_votes votes) with
+    | Some c => [c]
+    | None => []
+  end.
 
 Fixpoint last_item votes : option (candidate * nat) :=
 match votes with
@@ -174,15 +177,14 @@ end.
 Fixpoint run_election' (elect : election) (rec : record) (fuel : nat) :  (option candidate * record) :=
 match fuel with
 | S n' => let (ranks, elect') := (tabulate rec elect) in
-          let win_threshhold := (length elect') / 2 in (* here we use elect' because exhausted ballots
+          let win_threshhold := (length elect')  in (* here we use elect' because exhausted ballots
                                                           have been removed *) 
           match last_item ranks with
           | Some (cand1, cand1_votes)  => 
-            if (gtb_nat cand1_votes win_threshhold) then
+            if (gtb_nat (cand1_votes * 2) win_threshhold) then
               (Some cand1, rec)
-
             else
-              run_election' elect' (find_eliminated_noopt (rev ranks) :: rec) n'
+              run_election' elect' (find_eliminated_noopt  ranks :: rec) n'
           | None => (None, rec)
           end
 | _ => (None, rec)
