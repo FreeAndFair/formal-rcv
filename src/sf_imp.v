@@ -163,8 +163,8 @@ Definition find_eliminated votes :=
 
 Definition find_eliminated_noopt votes :=
   match break_tie (get_bottom_votes votes) with
-    | Some c => [c]
-    | None => []
+    | Some c => Some [c]
+    | None => None
   end.
 
 Fixpoint last_item votes : option (candidate * nat) :=
@@ -184,7 +184,12 @@ match fuel with
             if (gtb_nat (cand1_votes * 2) win_threshhold) then
               (Some cand1, rec)
             else
-              run_election' elect' (find_eliminated_noopt  ranks :: rec) n'
+              match (find_eliminated_noopt ranks) with 
+              | Some el =>
+                run_election' elect(*' hopefully just an optimization...*)
+                              (el :: rec) n'
+              | None => (None, rec)
+              end
           | None => (None, rec)
           end
 | _ => (None, rec)

@@ -199,9 +199,6 @@ Section election_spec.
       induction b.
       inversion H.
       inv H; inv H0; try rewrite Forall_forall in *; intuition.
-      specialize (H3 _ H2).
-      intuition.
-      specialize (H2 _ H3); intuition.
     Qed. 
 
     Lemma exhausted_ballot_next_ranking_iff : forall (b : ballot),
