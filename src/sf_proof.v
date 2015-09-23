@@ -2123,272 +2123,170 @@ induction fuel; intros.
               exists x. intuition.
               clear - H1 n0.
               eapply first_choices_rec_0; eauto.
-          + 
-
-
-Lemma next_ranking_rec_ne :
-forall b r c l x,
- c <> l ->
- sf_spec.continuing_ballot candidate (in_record r) b ->
- sf_spec.next_ranking candidate (in_record r) b x ->
- In c x ->
- sf_spec.next_ranking candidate (in_record ([l] :: r)) b x.
-proo
-
-
-
-Lemma next_ranking_no_viable : forall a l r  x,
-sf_spec.next_ranking _ (in_record r) a x ->
-sf_spec.no_viable_candidates _ (in_record ([l] :: r)) a ->
-In l x.
-Proof.
-induction a; intros.
-- simpl in *. inv H.
-- simpl in *. intuition.
-  + unfold sf_spec.no_viable_candidates in H0.
-    eapply IHa.
-    eauto. unfold sf_spec.no_viable_candidates. intros.
-    unfold in_record. simpl.
-    specialize (H0 rank). simpl in *. intuition. apply H0 in H3. 
-    unfold in_record in H3.
-    intuition. 
-  + subst. 
-    destruct H. intuition.
-    unfold sf_spec.no_viable_candidates in H0.
-    copy H0.
-    specialize (H a). simpl in H. intuition.
-    copy H1.
-    apply H in H1. 
-    unfold in_record in H1. destruct H1. intuition.
-    simpl in *. intuition. 
-    * subst. assert (x = l). inv H6. auto. inv H1. subst. auto.
-    * clear H4. clear H. unfold in_record in H2. exfalso.
-      apply H2. exists x0. auto.
+          + apply H.
+      }
+    * congruence.
 Qed.
 
-Lemma still_selected_neq :
-forall c l r a,
-  c <> l ->
-  sf_spec.selected_candidate candidate (in_record r) a c ->
-  sf_spec.selected_candidate candidate (in_record ([l] :: r)) a c.
+Lemma no_dup_map_allc :  forall allc,
+NoDup allc ->
+NoDup (fst (split (map (fun x : candidate => (x, 0)) allc))).
 Proof.
-  intros.
-  unfold sf_spec.selected_candidate in *.
-  destruct H0. destruct H1. destruct H1.
-  split. 
-  - unfold sf_spec.continuing_ballot in *.
-    intro. apply H0. clear H0.
-    unfold sf_spec.exhausted_ballot in *.
-    assert (In x a). eapply next_ranking_in; eauto.
-    destruct H3. 
-    + assert (In l x).
-      eapply next_ranking_no_viable; eauto.
-      right. unfold sf_spec.overvote. exists x. intuition.
-      exists c. exists l. intuition.
-    + destruct (classic (sf_spec.overvote candidate (in_record r) a)); auto.
-      cut (x = [l]). intros.
-      subst. assert (c = l). inv H2; auto. inv H5. subst. congruence.
+induction allc; intros.
+- simpl. auto.
+- simpl. inv H.
+  destruct ( split (map (fun x : candidate => (x, 0)) allc) ) eqn:?.
+  assert (l = fst (split (map (fun x : candidate => (x, 0)) allc))).
+  rewrite Heqp. auto. subst.
+  simpl in *. constructor; auto. intuition.   clear - H2 H.
+  apply H2. apply in_split in H. intuition_nosplit. 
+  apply in_map_iff in H. destruct H. intuition. inv H0. auto.
+Qed.
 
-Lemma eliminated_overvote_cons :
-forall t r h ,
-Forall r h ->
-sf_spec.overvote candidate r (h :: t) ->
-sf_spec.overvote candidate r t.
+Lemma nodup_not_in_filter :
+forall allc c l,
+NoDup allc ->
+~ In c
+         (map fst
+            (filter
+               (fun x : candidate * nat =>
+                let (_, ct) := x in EqNat.beq_nat ct 0)
+               (sf_imp.tabulate'' candidate reldec_candidate l
+                  (sf_imp.increment candidate reldec_candidate
+                     (map (fun x : candidate => (x, 0)) allc) c)))).
 Proof.
-induction t; intros; rewrite Forall_forall in *.
-- destruct H0. destruct H0.
-  destruct H1. destruct H1. intuition. simpl in H0.
-  intuition. subst. destruct H0. intuition.
-- unfold sf_spec.overvote in H0.
-  destruct H0. intuition. destruct H2. destruct H0.
-  intuition. simpl in H1. intuition. 
-  + unfold sf_spec.overvote.
-    exists x. split.
-    simpl. intuition.
-    exists x0. exists x1. intuition.
-  + subst.
-    destruct H5. intuition. clear H1.
-    unfold sf_spec.overvote.  exists a.
-    intuition. simpl. right.
-    intuition. exists x. auto.
-    exists x0. exists x1. auto.
-  + subst.
-    destruct H1. destruct H1.
-    apply H in H1. intuition.
+intros. intro.
+apply in_map_iff in H0. destruct H0. destruct H0. destruct x. simpl in *. subst.
+apply filter_In in H1. destruct H1. apply EqNat.beq_nat_true_iff in H1.
+subst. edestruct increment_same_s. Focus 2. 
+ eapply tabulate_not_0. Focus 2. eauto. apply increment_nodup. 
+instantiate (1:=map (fun x : candidate => (x, 0)) allc). apply no_dup_map_allc; auto.
+auto.
+eauto. apply no_dup_map_allc. auto.
 Qed.
 
 
-Lemma overvote_cons_elim :
-forall h t r,
-(forall c, In c h -> in_record r c) ->
-sf_spec.overvote candidate (in_record r) t ->
-sf_spec.overvote candidate (in_record r) (h :: t).
-intros.
-unfold sf_spec.overvote in *.
-intuitione.
-exists x. intuition.
-simpl. intuition.
-exists x0. exists x1. auto.
+Lemma find_0s_correct : 
+forall allc election c
+(PART: forall c, sf_spec.participates _ c election -> In c allc),
+NoDup allc ->
+In c (sf_imp.find_0s candidate reldec_candidate allc election) ->
+sf_spec.first_choices _ (in_record nil) c election 0.
+Proof.
+intros. destruct (classic (sf_spec.participates _ c election)). rename H1 into PTCPT.
+induction election; intros.
+- constructor.
+- destruct (classic (sf_spec.participates _ c election)).
+  unfold sf_imp.find_0s in *. simpl in *. 
+  destruct (sf_imp.next_ranking candidate reldec_candidate [] a) eqn:?.
+  + destruct p. destruct (sf_imp.option_split
+                            (map (sf_imp.next_ranking candidate reldec_candidate [])
+                                 election)) eqn:?.
+    simpl in *. destruct (rel_dec_p c0 c). 
+    * subst.
+      eapply nodup_not_in_filter in H. exfalso. apply H. apply H0.
+    * apply sf_spec.first_choices_not_selected. 
+      intro. apply next_ranking_selected in Heqo.
+      eapply sf_spec.selected_candidate_unique in Heqo; eauto.
+      apply IHelection; eauto. intros. apply PART.
+      apply participates_cons. auto.
+      apply in_map_iff.
+      apply in_map_iff in H0. intuition_nosplit.
+      exists x. destruct x. simpl in H0. subst. intuition.
+      apply filter_In in H2. apply filter_In. intuition.
+      { destruct (classic (In (c, n0)
+                            (sf_imp.tabulate'' candidate reldec_candidate l
+                                               (map (fun x : candidate => (x, 0)) allc)))).
+        - eapply tabulate''_same; [ | | | | exact H0]. apply increment_nodup.
+          apply no_dup_map_allc. auto. apply no_dup_map_allc. auto. apply increment_neq; eauto.
+          specialize (PART c). intuition. apply in_map_iff. exists c. auto.
+          rewrite (EqNat.beq_nat_true_iff) in H3. subst. eapply tabulate_not_in_l in H2.
+          
+Lemma tabulate_0_running :
+forall (c: candidate) l running
+(NODUP: NoDup (fst (split (running)))), 
+In (c, 0) (sf_imp.tabulate'' _ _ l running) ->
+In (c, 0) running.
+Proof.
+induction l. 
+- intros. simpl in *. auto.
+- intros. simpl in *. destruct a.
+  destruct (rel_dec_p c c0). 
+  + subst. exfalso. 
+    edestruct (increment_same_s c0).
+    eauto. 
+    eapply tabulate_not_0. 
+    * apply increment_nodup. eauto. 
+    * apply H0.
+    * auto.
+    * eauto.
+  + apply IHl in H. 
+    eapply increment_neq' in H; auto.
+    apply increment_nodup. auto.
+  + apply IHl in H; auto.
 Qed.
-
-Lemma overvote_appears : forall a r x l,
-sf_spec.next_ranking candidate (in_record r) a x ->
-~sf_spec.overvote candidate (in_record r) a ->
-sf_spec.overvote candidate (in_record ([l] :: r)) a ->
-Forall (eq l) x.
-  induction a; intros.
-- simpl in *. inv H.
-- simpl in H. destruct H.
-  + destruct H. apply eliminated_overvote_cons in H1; auto.
-    eapply IHa; eauto. intro. apply H0. clear H0. unfold sf_spec.overvote in H3.
-    apply overvote_cons_elim; auto.
-    rewrite Forall_forall. intros.  
-    specialize (H x0). intuition. 
-    clear - H4.
-    unfold in_record in *.
-    intuitione. exists x; simpl; auto.
-  + intuitione. subst.
-    unfold sf_spec.overvote in H1.
-    intuitione.
-    simpl in H1. intuitione.
-    specialize (H1 x0). intuition. unfold in_record in H5. intuitione.
-    simpl in H5. intuition. subst. inv H8.
     
+Focus 4. apply H. apply increment_nodup. auto. 
+  apply H0. auto. apply IHl. auto. 
 
-Lemma not_overvote_not_eliminated :
-forall t r x  a,
-~in_record r x ->
-~sf_spec.overvote candidate (in_record r) (a :: t) ->
-In x a ->
-Forall (eq x) a. 
-induction t; intros.    
-- induction a; intros.
-   + inv H1.
-   + simpl in H1. destruct H1.
-     subst. constructor; auto.
-     eapply IHa. intro. apply H0. clear H0. clear IHa.
-     unfold sf_spec.overvote in *.
-     intuitione. exists (x :: a0).  
-     split. simpl. right. eauto.
-     exists x1. exists x2. simpl in H1. repeat (intuitione; subst).
-     
-     inv H1.
-intuition. 
-     split. simpl in *. destruct H1. intuition.
-     intuitione. subst.
-     right. split.
-     unfold sf_spec.overvote in H0.
-     intuition.
-
-Lemma overvote_cons_and : 
-forall r bal rec, ~sf_spec.overvote candidate rec [x :: x
-     apply IHa.
-
-
-exfalso. apply H0. unfold sf_spec.overvote.
-  exists a. split.
-  + simpl. right.
-    intuition. exists x. auto.
-  + 
-    
-
-
-
-
-exists 
-                               eapply IHa; eauto. intro. apply H0.
-    unfold sf_spec.overvote.
-    unfold sf_spec.overvote in H1. destruct H1.
-    destruct H1. destruct H2. destruct H2. intuition.
-    simpl in H1. simpl in H. intuition.
-  + 
-
-simpl in *. intuition.
-  eapply IHa; eauto.
-unfold sf_spec.overvote in H1.
-destruct H1. destruct H1.
-destruct H2. destruct H2. intuition.
-
-      
-
-
-
-Lemma selected_rec_cons : forall l r a c,
-    c <> l ->
-    sf_spec.selected_candidate candidate (in_record ([l] :: r)) a c ->
-    sf_spec.selected_candidate candidate (in_record r) a c.
-intros.
-unfold sf_spec.selected_candidate in *. intuition. destruct H2. intuition.
-unfold sf_spec.continuing_ballot in *.
-intuition.
-apply H1. unfold sf_spec.exhausted_ballot in *.
-intuition. unfold no_viable_candidates in *. 
-      
-      
-      apply (ClassicalFacts.prop_extensionality _ _ update_eliminated_in_rec) .
-      unfold sf_spec.update_eliminated.
-
-unfold in_record. 
-rewrite <- update_eliminated_in_rec.
-split; intros.
-{ induction rec.
-  - unfold sf_spec.update_eliminated in H.
-    intuition. inv H0. destruct H. inv H.
-    subst. unfold in_record. exists [c]. intuition; auto.
-  - unfold sf_spec.update_eliminated in  *. intuition.
-    unfold in_record in H0. destruct H0. intuition.
-    simpl in H2. destruct H2.
-    + subst. unfold in_record. exists x. 
-      intuition.
-    + unfold in_record. exists x. intuition.
-    + unfold in_record in H2. destruct H2.
-      intuition. simpl in H2. destruct H2.
-      * subst. unfold in_record. exists [c].
-        intuition.
-      * exists x. intuition. }
-{ unfold in_record in H. destruct H. intuition. simpl in H0.
-  destruct H0. subst. unfold sf_spec.update_eliminated.
-  right. inv H1; auto. inv H.
-  left. unfold in_record. eauto. }
-Qed.
-
-Lemma winner_update :
-forall r l w election,
-sf_spec.winner candidate election
-     (sf_spec.update_eliminated candidate (in_record r) l) w
-<->
-sf_spec.winner candidate election
-     (in_record ([l] :: r)) w.
-intros.
-split; intros.
-induction election.
-- inv H. constructor. 
-  unfold sf_spec.majority in *. intros.
-  specialize (H0 total_votes winner_votes).
+[  | apply H | | ].
+  apply H.
+  eapply tabulate''_same in H; auto. apply IHl in H. apply H.
+  auto.
+  apply increment_nodup; auto. auto.
+  apply increment
   
 
 
-rewrite update_eliminated_in_rec.
+          auto.
+          apply H1.
+          apply tabulate_not_in_l.
+          
+          apply in_map_iff in H0. intuition_nosplit. destruct x. subst. simpl in *.
+          apply filter_In in H1. intuition_nosplit. apply EqNat.beq_nat_true_iff in H1.
+          subst. 
 
-exists [c].
-    simpl. intuition. right. left.
-  
-  unfold sf_spec.update_eliminated.
-  eapply IHfuel.
-  unfold sf_imp.find_eliminated_noopt in *.
-  destruct (tbreak (sf_imp.get_bottom_votes candidate l)) eqn:?.
-  eapply get_bottom_votes_is_loser in Heqp; eauto.
-  rewrite Forall_forall in Heqp.
-  apply TB in Heqo0.
-  apply Heqp in Heqo0. apply Heqo0.
-  
-  destruct (
-    
 
-Theorem run_election_correct : forall election winner tb rec, 
-    sf_imp.run_election candidate _ tb election = (Some winner, rec) ->
-    sf_spec.winner candidate (tb_func_to_Prop tb) election (in_record []) winner.
-intros. unfold sf_imp.run_election in H. apply run_election'_correct in H. auto.
+
+apply nodup_not_in_filter.
+
+Lemma find_0s_0 :
+In c (sf_imp.find_0s candidate reldec_candidate allc
+              (sf_imp.drop_none
+                 (fst
+                    (sf_imp.option_split
+                       (map
+                          (sf_imp.next_ranking candidate reldec_candidate [])
+                          election))))) ->
+  
+
+ solve_rcv.
+specialize (
+eapply IHallc. simpl in H. destr
+solve_rcv. simpl in *. destruct H.
+- subst. destruct election. constructor. constructor.
+  intro. 
+*)
+Theorem run_election_correct : forall election winner tb rec allc
+  (TB : forall c x, tb c = Some x -> In x c)
+  (PART : forall c, sf_spec.participates _ c election <-> In c allc) ,  
+    sf_imp.run_election candidate _ tb election allc = (Some winner, rec) ->
+    sf_spec.winner _ election (in_record []) winner.
+intros. unfold sf_imp.run_election in H. 
+apply run_election'_correct in H; auto.
+- admit.
+- intros. clear - H0 H1.
+  inv H1. inv H0. inv H. inv H0.
+  unfold sf_spec.participates in H0. intuition_nosplit.
+  simpl in H0. destruct H0. subst.
+  simpl in H2. destruct (sf_imp.next_ranking candidate reldec_candidate [] x) eqn:?.
+  + destruct p. destruct (sf_imp.option_split
+                            (map
+                               (sf_imp.next_ranking candidate
+                                  reldec_candidate 
+                                  []) t)) eqn:?.
+    simpl in H2. 
+  destruct (classic 
 Qed.
 
 

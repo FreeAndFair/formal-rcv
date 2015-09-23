@@ -195,17 +195,18 @@ match fuel with
 | _ => (None, rec)
 end.
 
-Fixpoint find_0s (all_candidates : list candidate) (initial_selected : list candidate) :=
-match all_candidates with
-| h::t => if existsb (eq_dec h) initial_selected
-          then find_0s t initial_selected
-          else h :: (find_0s t initial_selected)
-| nil => nil
-end.
+Check filter.
+
+Definition find_0s (all_candidates : list candidate) (el : election) :=
+let get_candidates := (map (next_ranking nil) el) in
+let (next_ranks, _) := option_split (get_candidates) in
+let initial := map (fun x => (x, 0)) all_candidates in
+let counts := tabulate'' next_ranks initial in
+map fst (filter (fun (x : candidate * nat) => let (_, ct) := x in beq_nat ct 0) counts).
 
 Definition run_election elect all_candidates :=
 let initial_selected := drop_none (fst (option_split (map (next_ranking nil) elect))) in
-run_election' elect (find_0s all_candidates initial_selected :: []) (length elect).
+run_election' elect ([find_0s all_candidates elect]) (length elect).
 
 
 End candidate.
