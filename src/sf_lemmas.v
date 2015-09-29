@@ -1,3 +1,4 @@
+Require Import Recdef. 
 Require sf_spec.
 Require Import sf_tactic.
 Require Import RelDec.
@@ -569,23 +570,277 @@ inv H. apply in_flatten in H0. auto. apply nil.
 inv H1.
 Qed.
 
+Fixpoint inb {A} {ed : (forall (a b : A), {a = b} + {a <> b})}  i (l : list A) :=
+match l with
+| h :: t => if ed i h then true else @inb A ed i t
+| nil => false
+end. 
+
+Lemma inb_in :
+forall A (i :A) l ed,
+@inb A ed i l =true <-> In i l.
+split; intros; induction l; simpl in *; try destruct (ed i a); intuition.
+Qed.
+
+
+Fixpoint remove_dups' {A} (ed : (forall (a b : A), {a = b} + {a <> b}))  (l : list A) acc  :=
+match l with 
+| h :: t => if @inb A ed h acc then remove_dups' ed t acc else remove_dups' ed t (h :: acc)
+| nil => acc
+end. 
+
+Definition remove_dups {A} (ed : (forall (a b : A), {a = b} + {a <> b}))  (l : list A) :=
+remove_dups' ed l nil.
+
+Lemma in_acc_in :
+forall A ed l (i :A) acc, In i acc -> In i (remove_dups' ed l acc).
+Proof.
+induction l; intros.
+- simpl. auto.
+- simpl in *. destruct (inb a acc) eqn:?. rewrite inb_in in *.
+  intuition.
+  intuition.
+Qed.
+
+Lemma In_remove_dups' :
+forall {A} ed (l : list A) i acc, In i l -> In i (remove_dups' ed l acc).
+Proof.
+induction l; intros.
+- inv H.
+- simpl in *. destruct (inb a acc) eqn:?. rewrite inb_in in Heqb.
+  destruct H. subst. apply in_acc_in. auto.
+  intuition.
+  intuition. subst. apply in_acc_in. simpl. auto.
+Qed.
+
+Lemma remove_dups_in :
+forall {A} ed (l : list A) i acc, 
+In i (remove_dups' ed l acc) ->
+(In i l \/ In i acc).
+Proof.
+induction l; intros. 
+- intuition.
+- simpl in *. destruct (inb a acc) eqn:?.
+  rewrite inb_in in Heqb. edestruct IHl; eauto.
+  edestruct IHl; eauto. simpl in H0. intuition.
+Qed.
+
+Lemma remove_dups_in_iff :
+forall A ed (i : A) l,
+In i (remove_dups ed l) <-> In i l.
+Proof.
+intuition.
+unfold remove_dups in H. apply remove_dups_in in H. intuition.
+unfold remove_dups. apply In_remove_dups'. auto.
+Qed.
+
+
+Lemma nodup_remove_dups' :
+forall A ed (l : list A) acc,
+NoDup acc -> 
+NoDup (remove_dups' ed l acc).
+Proof.
+induction l; intros; simpl. auto. 
+simpl. destruct (inb a acc) eqn:?.
+auto.  apply IHl. constructor.
+intro. rewrite <- inb_in in H0. instantiate (1:= ed) in H0. 
+congruence. 
+auto.
+Qed.
+
+Lemma nodup_remove_dups :
+forall A ed (l : list A) ,
+NoDup (remove_dups ed l ).
+Proof. unfold remove_dups. intros. apply nodup_remove_dups'. constructor.
+Qed.
+
+Lemma in_record_remove_dups (c : candidate): 
+forall l ed, in_record l c <-> in_record ([remove_dups ed (flatten l)]) c.
+Proof.
+split; intros.
+unfold in_record in *. intuition_nosplit.
+exists (remove_dups ed (flatten l)).
+intuition.
+apply remove_dups_in_iff. apply in_flatten. apply nil. 
+eauto.
+unfold in_record in *. intuition_nosplit.
+inv H. apply remove_dups_in_iff in H0. apply in_flatten in H0.
+eauto. apply nil. inv H1.
+Qed.
+
+Lemma in_record_remove_dups_eq :
+forall l ed, @in_record candidate l  = in_record ([remove_dups ed (flatten l)]).
+Proof.
+intros. extensionality c. apply prop_ext. apply in_record_remove_dups.
+Qed.
+
+Lemma in_record_duplicate_remove :
+forall h t l c,
+@in_record candidate l h -> 
+(in_record ((h::t) :: l) c <-> in_record (t :: l) c).
+intuition.
+- unfold in_record in *; intuition_nosplit; simpl in *; 
+  repeat (intuition; subst; eauto; simpl in *).
+- unfold in_record in *. intuition_nosplit. simpl in H0.
+  destruct H0. subst. simpl.
+  exists (h :: x). intuition.
+  simpl. eauto.
+Qed.
+
+Lemma in_record_duplicate_remove_eq :
+forall h t l,
+@in_record candidate l h -> 
+(in_record ((h::t) :: l)  = in_record (t :: l) ).
+Proof.
+intros. extensionality c. apply prop_ext. apply in_record_duplicate_remove; auto.
+Qed.
+
+Lemma winner_eliminate_0s' :
+forall election  c winner l,
+sf_spec.first_choices _ (in_record [l]) c election 0 ->
+sf_spec.winner candidate election (in_record ([c ::l]) ) winner ->
+sf_spec.winner candidate election (in_record [l]) winner.
+Proof.
+intros.
+induction l. rewrite <- in_record_nil_nil_eq in *.
+inv H0.
+
+
 
 Lemma winner_eliminate_0s :
 forall election r winner l
 (NODUP : NoDup l),
-(forall c, in_record (r::l) c -> sf_spec.first_choices _ (in_record l) c election 0) ->
-sf_spec.winner candidate election (in_record (r ::l) ) winner ->
-sf_spec.winner candidate election (in_record l) winner.
+(forall c, in_record [r::l] c -> sf_spec.first_choices _ (in_record [l]) c election 0) ->
+sf_spec.winner candidate election (in_record [r ::l] ) winner ->
+sf_spec.winner candidate election (in_record [l]) winner.
 Proof.
-intros. 
 induction r; auto; intros. rewrite in_record_nil_nil_eq. auto.  
 destruct (classic (sf_spec.participates _ a election)).
-- destruct (classic (sf_spec.no_majority candidate (in_record l) election)).
-  + eapply sf_spec.winner_elimination.
-    auto. specialize (H a). eapply first_choices_0_loser in H. apply H.
-    
-    auto. unfold in_record. 
-Admitted. 
+- eapply IHr; eauto.
+
+  destruct (classic (sf_spec.no_majority candidate (in_record (r :: l)) election)).  
+  + destruct (classic (in_record l a)).
+    * rewrite in_record_duplicate_remove_eq in H0; auto.
+       eapply IHr; auto. intros. apply H. unfold in_record in *. intuition_nosplit.  
+       simpl in H4. simpl. intuition; eauto.  
+       subst.  exists (a :: x). intuition. 
+    * { eapply sf_spec.winner_elimination; auto.
+        - 
+
+Lemma no_majority_remove_0 :
+forall r l election,
+(forall c, in_record (r::l) c -> sf_spec.first_choices candidate (in_record l) c election 0) ->
+sf_spec.no_majority candidate (in_record (r :: l)) election ->
+sf_spec.no_majority candidate (in_record l) election.
+Proof.
+intros. unfold sf_spec.no_majority in *.
+intro. apply H0. clear H0.
+destruct H1.
+exists x. unfold sf_spec.majority in *. intros.
+
+
+Lemma total_selected_remove_0 :
+forall election r l t,
+(forall c, in_record (r::l) c -> sf_spec.first_choices candidate (in_record l) c election 0) ->
+sf_spec.total_selected candidate (in_record (r :: l)) election t ->
+sf_spec.total_selected candidate (in_record l) election t.
+Proof.
+induction election; intros.
+inv H0. constructor.
+inv H0.
+constructor.
+
+Lemma rem_0_still_continuing :
+forall election r l b,
+(forall c, in_record (r::l) c -> sf_spec.first_choices candidate (in_record l) c (b::election) 0) ->
+sf_spec.continuing_ballot candidate (in_record (r :: l)) b ->
+sf_spec.continuing_ballot candidate (in_record l) b.
+intros. rewrite <- continuing2_continuing in *. unfold continuing2 in *.
+intuition_nosplit. exists x. intuition.
+
+Lemma selected_cons' : 
+forall r a b c,
+Forall r a ->
+~sf_spec.overvote _ a ->
+sf_spec.selected_candidate candidate r b c ->
+sf_spec.selected_candidate _ r (a :: b) c.
+Proof.
+intros. rewrite Forall_forall in *.
+induction b.
+inv H1. intuition_nosplit. 
+destruct H1.  intuition_nosplit.
+unfold sf_spec.selected_candidate.
+split. 
+- rewrite <- continuing2_continuing in *.
+  unfold continuing2 in *.
+  intuition_nosplit. exists x0. intuition.
+  constructor; try rewrite Forall_forall; auto. 
+- exists x. intuition.
+  constructor; auto.
+  rewrite Forall_forall. auto.
+Qed.
+
+Lemma first_choices_0_not_next :
+forall election c b l rnk
+(OV: ~sf_spec.overvote _ rnk),
+ sf_spec.first_choices candidate (in_record l) c election 0 ->
+In b election ->
+sf_spec.next_ranking candidate (in_record l) b rnk ->
+~In c rnk.
+Proof.
+intros.
+intro.
+induction election.
+inv H0.
+simpl in H0.
+destruct H0.
+- clear IHelection. subst. induction b.  
+  + inv H1.
+  + inv H1. 
+    * apply IHb; auto.  inv H. intuition. 
+      constructor. intro. apply H3. clear H3. apply selected_cons'; auto.
+      auto.
+    * destruct H6. intuition. inv H. apply H5. clear H5.
+      split. rewrite <- continuing2_continuing. unfold continuing2.
+      exists rnk. intuition. eapply sf_spec.next_ranking_valid.
+      apply H4. intuition.
+      exists rnk. intuition. eapply sf_spec.next_ranking_valid. apply H4. intuition.
+- apply IHelection; auto. inv H. auto.
+Qed.
+
+Lemma rem_0_still_next :
+forall r l  x b election,
+(forall c : candidate,
+      in_record (r :: l) c ->
+      sf_spec.first_choices candidate (in_record l) c (b::election) 0) ->
+sf_spec.next_ranking candidate (in_record (r :: l)) b x ->
+sf_spec.next_ranking candidate (in_record l) b x.
+intros. induction b.
+- inv H0.
+- inv H0. 
+  destruct a.
+  + constructor; auto. apply IHb; auto.
+    intros. apply H in H0. inv H0.
+    constructor. intro. apply H5. clear H5.
+    unfold sf_spec.selected_candidate in *.
+    intuition_nosplit. split. 
+    rewrite <- continuing2_continuing in *.
+    unfold continuing2 in *. intuition_nosplit. exists x1.  intuition.
+    constructor; auto. exists x0. intuition. constructor; auto. auto.
+  + rewrite Forall_forall in H3. simpl in *.
+    specialize (H3 c). intuition. clear H1. 
+    unfold in_record in H2. simpl in H2. intuition_nosplit.
+    destruct H0. 
+    * subst. specialize (H c). assert (sf_spec.first_choices candidate (in_record l) c
+        (((c :: a) :: b) :: election) 0). apply H. clear H. solve_rcv.
+      eapply first_choices_0_not_next in H0; eauto. simpl in H0. intuition.
+      simpl. left. auto. eapply sf_spec.next_ranking_valid. simpl. auto.
+      right.  intro. inv H0. 
+      constructor.
+      instantiate (1:= (c :: a) :: b). simpl. left. auto.
+      
+      
+
 (*exists (a::r). simpl; auto.
     rewrite update_eliminated_in_rec_eq_noc. inv H0. admit. (* no majority conflicts with majority *)
 *)
