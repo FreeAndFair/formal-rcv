@@ -828,6 +828,14 @@ intuition_nosplit. exists x. intuition.
 eapply rem_0_still_next; eauto.    
 Qed.
 
+Lemma next_ranking_add_c : 
+forall c l a x election,
+sf_spec.first_choices candidate (in_record [l]) c election 0 ->
+In a election ->
+sf_spec.next_ranking candidate (in_record [l]) a x ->
+sf_spec.next_ranking candidate (in_record [c::l]) a x.
+Admitted.
+
 Lemma total_selected_remove_0 :
 forall election c l t,
   sf_spec.first_choices candidate (in_record [l]) c election 0 ->
@@ -843,12 +851,21 @@ eapply IHelection; eauto. inv H; auto. constructor; auto.
 unfold sf_spec.exhausted_ballot in *. 
 destruct H3.
 left. intro. apply H0. clear H0.
-intuition_nosplit. exists x. admit. (*ugh*)
+intuition_nosplit. exists x. eapply next_ranking_add_c; eauto.
+simpl. auto.
 right. intuition_nosplit. exists x. intuition.
 eapply rem_0_still_next in H0; simpl; eauto. simpl. eauto.
 eapply IHelection; eauto.
 inv H. auto.
 Qed.
+
+Lemma first_choices_remove_0 :
+  forall l c x election winner_votes,
+  sf_spec.first_choices candidate (in_record [l]) c election 0 ->
+  sf_spec.first_choices candidate (in_record [c :: l]) x election
+                        winner_votes ->
+  sf_spec.first_choices candidate (in_record [l]) x election winner_votes.
+Admitted.
 
 Lemma no_majority_remove_0 :
 forall  l election c,
@@ -861,7 +878,7 @@ intro. apply H0. clear H0.
 destruct H1.
 exists x. unfold sf_spec.majority in *. intros.
 apply total_selected_remove_0 in H1; auto.
-apply H0; auto. admit. (*more ugh*)
+apply H0; auto. generalize dependent H2. revert H.  apply first_choices_remove_0.
 Qed.
 
 Lemma not_isloser_nil :
@@ -882,9 +899,36 @@ intros. intro. inv H.
 - apply not_isloser_nil in H1. auto.
 Qed.
 
+Lemma in_record_flatten_eq : forall r,
+@in_record candidate r = in_record [flatten r].
+intros. extensionality c. apply prop_ext. apply in_record_flatten.
+Qed.
+
+Lemma not_participates_rec :
+  forall c election l winner,
+    ~ sf_spec.participates candidate c (election) ->
+    sf_spec.winner candidate (election) (in_record [c :: l]) winner ->
+    sf_spec.winner candidate (election) (in_record [l]) winner.
+ Admitted.
+
+Lemma majority_unique :
+forall r e x x',
+sf_spec.majority candidate r e x ->
+sf_spec.majority candidate r e x' ->
+x = x'.
+Admitted.
+
+Lemma majority_remove_0 :
+  forall l c election winner,
+  sf_spec.first_choices candidate (in_record [l]) c (election) 0 ->
+   sf_spec.majority candidate (in_record [c :: l]) (election) winner ->
+   sf_spec.majority candidate (in_record [l]) (election) winner.
+Admitted.
+
 
 Lemma winner_eliminate_0s' :
-forall election  c winner l,
+forall election  c winner l
+(NODUP : NoDup (c::l)),
 sf_spec.first_choices _ (in_record [l]) c election 0 ->
 sf_spec.winner candidate election (in_record ([c ::l]) ) winner ->
 sf_spec.winner candidate election (in_record [l]) winner.
@@ -895,11 +939,31 @@ induction election.
   + unfold sf_spec.majority in *. specialize (H 0 0). 
     assert (0*2 > 0). apply H. constructor; auto. constructor. omega. 
   + apply not_winner_nil in H2. inv H2. 
-- constructor.  inv H0.  auto. admit.
-  
+- destruct (classic (sf_spec.no_majority candidate (in_record [c :: l]) (a :: election))).
+  + destruct (classic ( sf_spec.participates candidate c (a :: election))). 
+    * apply sf_spec.winner_elimination with (loser := c); auto. 
+      apply no_majority_remove_0 in H1; auto.
+      apply first_choices_0_loser. inv NODUP. intro. apply H5.
+      solve_rcv. inv H3. auto. inv H7. 
+      auto. auto. rewrite update_eliminated_in_rec_eq_noc. rewrite in_record_flatten_eq.
+      simpl. rewrite app_nil_r. auto. 
+    * eapply not_participates_rec; eauto.
+  + unfold sf_spec.no_majority in *.  apply NNPP in H1. destruct H1.
+    inv H0. assert (x = winner). eapply majority_unique; eauto. subst.
+    constructor.  apply majority_remove_0 in H2. auto.
+    auto.
+    exfalso. apply H2. exists x. auto.
+Qed.
 
 
-(*Lemma winner_eliminate_0s :
+Lemma first_choices_0_rev:
+forall l a election,
+(forall c, In c l -> sf_spec.first_choices candidate (in_record []) c election 0) ->
+sf_spec.first_choices candidate (in_record []) a election 0 ->
+sf_spec.first_choices candidate (in_record [l]) a election 0.
+Admitted.
+
+Lemma winner_eliminate_0s :
 forall election winner l
 (NODUP : NoDup l),
 (forall c, in_record [l] c -> sf_spec.first_choices _ (in_record []) c election 0) ->
@@ -907,74 +971,15 @@ sf_spec.winner candidate election (in_record [l] ) winner ->
 sf_spec.winner candidate election (in_record []) winner.
 Proof.
   induction l; intros. rewrite in_record_nil_nil_eq. auto.
+  apply winner_eliminate_0s' in H0; auto. 
+  apply IHl; auto. inv NODUP; auto. intros.
+  specialize (H c). apply H. destruct H1. intuition.
+  exists (a::l). simpl; intuition. inv H2; auto. inv H1.
+  assert (sf_spec.first_choices candidate (in_record []) a election 0). 
+  apply H. exists (a::l); simpl; intuition.
+  apply first_choices_0_rev; auto. intros. apply H.
+  exists (a :: l). simpl; auto.
+Qed.
   
-induction r; auto; intros. rewrite in_record_nil_nil_eq. auto.  
-destruct (classic (sf_spec.participates _ a election)).
-- eapply IHr; eauto.
-
-  destruct (classic (sf_spec.no_majority candidate (in_record (r :: l)) election)).  
-  + destruct (classic (in_record l a)).
-    * rewrite in_record_duplicate_remove_eq in H0; auto.
-       eapply IHr; auto. intros. apply H. unfold in_record in *. intuition_nosplit.  
-       simpl in H4. simpl. intuition; eauto.  
-       subst.  exists (a :: x). intuition. 
-    * { eapply sf_spec.winner_elimination; auto.
-        - 
-*)
-
-
-
-
-
-
-
-eapply sf_spec.first_choices_not_selected in H3. subst. constructor; auto. 
-              unfold sf_spec.selected_candidate in H3.
-              
-exfalso. apply H3. 
-
-              constructor. rewrite Forall_forall. intros. 
-              apply H2 in H. unfold in_record in *.
-              
-            simpl in H2. intuition.
-
- 
-          econstructor; eauto. destruct a. auto. 
-          destruct (rel_dec_p c0 c).
-          + subst. rewrite Forall_forall in *. intros.
-            specialize (H2 x0). simpl in H2. 
-rewrite Forall_forall in *. intros.  apply H2 in H.
-          unfold in_record in H. destruct H. simpl in H. intuition.
-          subst. unfold in_record. exists (l). intuition. simpl i nH1.
-          solve_rcv.
-intuition.
-  + inv H.
-inv H0. 
-  destruct a.
-  + constructor; auto. apply IHb; auto.
-    intros. apply H in H0. inv H0.
-    constructor. intro. apply H5. clear H5.
-    unfold sf_spec.selected_candidate in *.
-    intuition_nosplit. split. 
-    rewrite <- continuing2_continuing in *.
-    unfold continuing2 in *. intuition_nosplit. exists x1.  intuition.
-    constructor; auto. exists x0. intuition. constructor; auto. auto.
-  + rewrite Forall_forall in H3. simpl in *.
-    specialize (H3 c). intuition. clear H1. 
-    unfold in_record in H2. simpl in H2. intuition_nosplit.
-    destruct H0. 
-    * subst. specialize (H c). assert (sf_spec.first_choices candidate (in_record l) c
-        (((c :: a) :: b) :: election) 0). apply H. clear H. solve_rcv.
-      eapply first_choices_0_not_next in H0; eauto. simpl in H0. intuition.
-      simpl. left. auto. eapply sf_spec.next_ranking_valid. simpl. auto.
-      right.  intro. inv H0. 
-      constructor.
-      instantiate (1:= (c :: a) :: b). simpl. left. auto.
-      
-      
-
-(*exists (a::r). simpl; auto.
-    rewrite update_eliminated_in_rec_eq_noc. inv H0. admit. (* no majority conflicts with majority *)
-*)
 
 End cand.
