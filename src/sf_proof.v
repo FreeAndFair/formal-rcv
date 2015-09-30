@@ -1472,7 +1472,7 @@ induction fuel; intros.
           copy Heqp. 
           apply tabulate_sorted in Heqp.
           clear - Heqp Heqo H0 H1 H2 N0.
-          destruct (majority_not_0 _ _ _ H0). intuition. 
+          destruct (majority_not_0 _ _ _ _ H0). intuition. 
           rename H4 into X0. rename H3 into FCX.
           apply Sorted_StronglySorted in Heqp; [ |  apply cnlt_trans].
           eapply ss_last in Heqp; eauto.
@@ -1639,28 +1639,29 @@ induction election; intros.
     * intros. apply PART. apply participates_cons; auto.
 Qed.
 
-
-
+Lemma find_0s_complete :
+  forall election allc c,
+ sf_spec.first_choices candidate
+     (in_record [sf_imp.find_0s candidate reldec_candidate allc election]) c
+     election 0 ->
+   sf_spec.participates candidate c election ->
+   In c (sf_imp.find_0s candidate reldec_candidate allc election).
+Admitted. (*might be hard, can it be worded better?*)
+  
 Theorem run_election_correct : forall election winner tb rec allc
   (TB : forall c x, tb c = Some x -> In x c)
-  (PART : forall c, sf_spec.participates _ c election <-> In c allc) ,  
+  (PART : forall c, sf_spec.participates _ c election <-> In c allc) 
+  (NODUP : NoDup allc),  
     sf_imp.run_election candidate _ tb election allc = (Some winner, rec) ->
     sf_spec.winner _ election (in_record []) winner.
 intros. unfold sf_imp.run_election in H. 
 apply run_election'_correct in H; auto.
-- admit.
-- intros. clear - H0 H1.
-  inv H1. inv H0. inv H. inv H0.
-  unfold sf_spec.participates in H0. intuition_nosplit.
-  simpl in H0. destruct H0. subst.
-  simpl in H2. destruct (sf_imp.next_ranking candidate reldec_candidate [] x) eqn:?.
-  + destruct p. destruct (sf_imp.option_split
-                            (map
-                               (sf_imp.next_ranking candidate
-                                  reldec_candidate 
-                                  []) t)) eqn:?.
-    simpl in H2. 
-  destruct (classic 
-Qed.y
+- eapply winner_eliminate_0s in H; auto. admit.
+  intros. eapply find_0s_correct. intros. apply PART. auto.  auto.
+  destruct H0. intuition. inv H1. auto. inv H0.
+- intros. 
+  eexists. simpl. split. left. reflexivity.
+  apply find_0s_complete; auto. 
+Qed. 
 
 

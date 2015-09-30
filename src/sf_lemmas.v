@@ -63,7 +63,7 @@ sf_spec.first_choices c r cnd (l1 ++ l2) (x1 + x2).
 Proof.
 induction l1; intros.
 - simpl in *. inv H. simpl. auto.
-- simpl in *. Print sf_spec.first_choices.
+- simpl in *. 
   inv H.
   + apply sf_spec.first_choices_selected. auto. fold plus.
     apply IHl1; auto.
