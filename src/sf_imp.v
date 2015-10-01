@@ -4,10 +4,13 @@ Require Import List.
 Require Import Sorting.
 Require Import Orders.
 Require Import Compare_dec.
-Require Import NPeano.
+Require Import Coq.Numbers.BinNums.
+Require Import Coq.NArith.BinNat.
 Import ListNotations.
 
 Section candidate.
+
+Local Open Scope N_scope.
 
 Variable candidate : Set.
 Variable reldec_candidate : RelDec (@eq candidate).
@@ -52,14 +55,14 @@ match l with
 | [] => []
 end.
 
-Fixpoint increment (r : list (candidate * nat)) (c : candidate) :=
+Fixpoint increment (r : list (candidate * N)) (c : candidate) :=
 match r with 
-| (c1, n) :: t => if (eq_dec c1 c) then (c1, S n) :: t else (c1, n) :: increment t c
+| (c1, n) :: t => if (eq_dec c1 c) then (c1, (n + 1)) :: t else (c1, n) :: increment t c
 | nil => [(c, 1)]
 end.
 
 
-Fixpoint tabulate'' (rs : list (option candidate)) lc: list (candidate * nat) :=
+Fixpoint tabulate'' (rs : list (option candidate)) lc: list (candidate * N) :=
 match rs with
 | (Some h) :: t => tabulate'' t (increment lc h)
 | None :: t => tabulate'' t lc
@@ -69,9 +72,9 @@ end.
 Definition tabulate' (rs : list (option candidate)) :=
 tabulate'' rs nil.
 
-Definition cnle (a b : (candidate * nat)) : bool :=
+Definition cnle (a b : (candidate * N)) : bool :=
 match a, b with
-(_, n1), (_, n2) => NPeano.leb n1 n2
+(_, n1), (_, n2) => N.leb n1 n2
 end.
 
 Fixpoint insert {A} (cmp : A -> A -> bool) (i : A) (l : list A) :=
@@ -101,48 +104,48 @@ match l with
 | None :: t => let (l1, l2) := option_split t in ((None :: l1), ( None :: l2))
 end.
 
-Definition tabulate (rec : record) (elect : election) : ((list (candidate * nat) * election)) :=
+Definition tabulate (rec : record) (elect : election) : ((list (candidate * N) * election)) :=
 let get_candidates := (map (next_ranking rec) elect) in
 let (next_ranks, next_election) := option_split (get_candidates) in
 let counts := tabulate' next_ranks in
 let sorted_ranks := insertionsort cnle counts in
 (sorted_ranks, drop_none next_election).
 
-Definition gtb_nat (a b : nat) : bool:=
-match (nat_compare a b) with
-| Gt => true
-| _ => false
-end.
+Definition gtb_N (a b : N) : bool:=
+negb (N.leb a b). 
 
 Require Import Omega.
 
 Lemma gtb_nat_gt : forall a b,
-gtb_nat a b = true <-> a > b.
-unfold gtb_nat in *.
-intros. destruct (nat_compare a b) eqn:?; intuition; try discriminate.
-- apply  nat_compare_eq in Heqc. omega. 
-- apply nat_compare_lt in Heqc. omega.
-- apply nat_compare_gt in Heqc. auto.
+gtb_N a b = true <-> a > b.
+unfold gtb_N in *.
+intros. 
+destruct ( a <=? b) eqn:?; intuition; try discriminate.
+ - rewrite N.leb_le in Heqb0. exfalso. apply N.gt_lt in H. 
+   rewrite N.lt_eq_cases in Heqb0. 
+   destruct Heqb0. apply N.lt_asymm in H. auto. subst.
+   apply N.lt_irrefl in H. auto.
+ - rewrite N.leb_gt in Heqb0. clear H. apply N.gt_lt_iff. auto.
 Qed.
 
 
-Definition get_bottom_votes (votes : list (candidate * nat)) :=
+Definition get_bottom_votes (votes : list (candidate * N)) :=
 match votes with
-| (c, v) :: t => map (@fst _ _) (filter (fun (x : candidate * nat) => let (_, v') := x in 
-                                  beq_nat v v') votes)
+| (c, v) :: t => map (@fst _ _) (filter (fun (x : candidate * N) => let (_, v') := x in 
+                                  N.eqb v v') votes)
 | nil => nil
 end.
 
 Variable break_tie : list candidate -> option candidate.
 
 (* This expects a list of candidates sorted ascending in number of votes *)
-Fixpoint find_eliminated' (eliminated : list candidate) (votes : list (candidate * nat)) (sum : nat) :=
+Fixpoint find_eliminated' (eliminated : list candidate) (votes : list (candidate * N)) (sum : N) :=
   match votes with
   | (cand, count) :: t =>
     match t with 
     |  (cand2, count2) :: _ =>  
        let newsum := sum + count in
-       if (ltb (newsum) count2) then
+       if (N.ltb (newsum) count2) then
          find_eliminated' (cand :: eliminated)
                           t sum
        else
@@ -167,7 +170,7 @@ Definition find_eliminated_noopt votes :=
     | None => None
   end.
 
-Fixpoint last_item votes : option (candidate * nat) :=
+Fixpoint last_item votes : option (candidate * N) :=
 match votes with
 | h :: [] => Some h
 | [] => None
@@ -177,11 +180,11 @@ end.
 Fixpoint run_election' (elect : election) (rec : record) (fuel : nat) :  (option candidate * record) :=
 match fuel with
 | S n' => let (ranks, elect') := (tabulate rec elect) in
-          let win_threshhold := (length elect')  in (* here we use elect' because exhausted ballots
-                                                          have been removed *) 
+          let win_threshhold := N.of_nat (length elect')  in 
+          (* here we use elect' because exhausted ballots have been removed *) 
           match last_item ranks with
           | Some (cand1, cand1_votes)  => 
-            if (gtb_nat (cand1_votes * 2) win_threshhold) then
+            if (gtb_N (cand1_votes * 2) (win_threshhold)) then
               (Some cand1, rec)
             else
               match (find_eliminated_noopt ranks) with 
@@ -202,7 +205,7 @@ let get_candidates := (map (next_ranking nil) el) in
 let (next_ranks, _) := option_split (get_candidates) in
 let initial := map (fun x => (x, 0)) all_candidates in
 let counts := tabulate'' next_ranks initial in
-map fst (filter (fun (x : candidate * nat) => let (_, ct) := x in beq_nat ct 0) counts).
+map fst (filter (fun (x : candidate * N) => let (_, ct) := x in N.eqb ct 0) counts).
 
 Definition run_election elect all_candidates :=
 let initial_selected := drop_none (fst (option_split (map (next_ranking nil) elect))) in
