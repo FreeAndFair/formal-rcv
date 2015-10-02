@@ -8,15 +8,19 @@ Require Import Permutation.
 Require Import FunctionalExtensionality.
 Require Import Classical.
 Require Import sf_tactic.
+Require Import Coq.Numbers.BinNums.
+Require Import Coq.NArith.BinNat.
+
 Import ListNotations.
 
 
 Section cand.
 
 Variable candidate : Set.
-Variable reldec_candidate : RelDec (@eq candidate).
+Variable reldec_candidate : RelDec (@Logic.eq candidate).
 Variable reldec_correct_candidate : RelDec_Correct reldec_candidate.
 
+Local Open Scope N_scope.
 
 Ltac solve_rcv := sf_tactic.solve_rcv reldec_correct_candidate.
 Ltac intuition_nosplit := sf_tactic.intuition_nosplit reldec_correct_candidate.
@@ -111,7 +115,7 @@ Hint Resolve next_ranking_not_overvote : rcv.
 Lemma next_ranking_correct :
 forall rec bal cd bal' ,
 sf_imp.next_ranking candidate _ rec bal = Some (cd, bal') ->
-exists h t,(sf_spec.next_ranking candidate (in_record rec) bal (h::t) /\ Forall (eq cd) (h::t)).
+exists h t,(sf_spec.next_ranking candidate (in_record rec) bal (h::t) /\ Forall (Logic.eq cd) (h::t)).
 Proof.
 intros.
 induction bal.
@@ -428,11 +432,11 @@ Proof.
 intros. apply rel_dec_correct. auto.
 Qed.
 
-Lemma increment_spec : forall m cd cds ct,
+Lemma increment_spec : forall (m : list (candidate *  N)) cd cds (ct : N),
 cds = (fst (split m)) ->
 NoDup (cds) -> 
-(In (cd, ct) m -> In (cd, S ct) (sf_imp.increment candidate _ m cd)) /\
-(~In cd cds -> In (cd, 1) (sf_imp.increment candidate _ m cd)). 
+(In (cd, ct) m -> In (cd, (ct + 1)%N) (sf_imp.increment candidate _ m cd)) /\
+(~In cd cds -> In (cd, 1%N) (sf_imp.increment candidate _ m cd)). 
 Proof.
 induction m; intros.
 - simpl in *. intuition.
@@ -473,7 +477,7 @@ induction m; intros.
         simpl. 
         edestruct IHm; eauto.
         eapply reldec_correct_candidate.
-Grab Existential Variables. exact O.
+Grab Existential Variables. exact 0.
 Qed.
 
 
@@ -486,7 +490,8 @@ induction running; intros; intro.
 - simpl in *. destruct a. destruct (eq_dec c cd) eqn:?.
   + clear IHrunning. apply reldec_correct_candidate in Heqb. subst.
     simpl in *. destruct (split running) eqn:?. simpl in *. 
-    inv H. intuition. congruence. apply in_split_l in H. 
+    inv H. intuition. inv H. rewrite N.add_comm in H1. rewrite N.eq_add_0 in H1. 
+    intuition. congruence.  apply in_split_l in H. 
     simpl in H. rewrite Heqp in H. simpl. intuition.
   + simpl in *. destruct (split running) eqn:?. simpl in *.
     apply neg_rel_dec_correct in Heqb. destruct H0.
@@ -571,9 +576,9 @@ induction l; intros.
   + subst.
     eapply IHl in H2; auto.
     * apply increment_nodup. auto.
-    * instantiate (1:=S v). edestruct increment_spec. reflexivity.
+    * instantiate (1:=v + 1). edestruct increment_spec. reflexivity.
       apply H. apply H3. auto.
-    * intuition.
+    * intuition.  rewrite N.eq_add_0 in H3. destruct H3. congruence. 
   + eapply IHl in H2; auto.
     * apply increment_nodup; auto.
     * instantiate (1:=v). edestruct increment_spec. reflexivity.
@@ -624,16 +629,17 @@ Qed.
 Lemma tab_inc_s : forall cd ct l running running' cr,
 NoDup (fst (split running)) ->
 NoDup (fst (split running')) ->
-In (cd, S ct)
+In (cd, ct + 1)
    (sf_imp.tabulate'' candidate reldec_candidate l running') ->
 In (cd, cr) running ->
-In (cd, (S cr)) running' ->
+In (cd, (cr + 1)) running' ->
 In (cd, ct) (sf_imp.tabulate'' candidate reldec_candidate l running).
 Proof.
 induction l; intros.
 - simpl in *. 
   assert (cr = ct).
-  eapply NoDup_In_fst in H3. instantiate (1:=S ct) in H3. congruence.
+  eapply NoDup_In_fst in H3. instantiate (1:= ct + 1) in H3.
+  apply N.add_cancel_r in H3. auto.
   auto. auto. subst. auto.
 - simpl in *.
   destruct a. 
@@ -735,7 +741,7 @@ Qed.
 
 Lemma tab_inc_s_l :
 forall l cd ct running,
-In (cd, S ct) (sf_imp.tabulate'' candidate reldec_candidate l
+In (cd, ct + 1) (sf_imp.tabulate'' candidate reldec_candidate l
                (sf_imp.increment candidate reldec_candidate running cd)) ->
 ~ In cd (fst (split running)) ->
 NoDup (fst (split running)) ->
@@ -831,7 +837,7 @@ Qed.
 Lemma increment_same_s : 
 forall c running,
 NoDup (fst (split running)) ->
-exists n, In (c, S n) (sf_imp.increment candidate _ running c).
+exists n, In (c, n + 1) (sf_imp.increment candidate _ running c).
 intros. 
 destruct (in_dec rel_dec_p c (fst (split running))).
 apply in_split in i. destruct i.
@@ -848,9 +854,9 @@ In (cd, ct) (sf_imp.tabulate'' candidate _
                                       (map (sf_imp.next_ranking candidate reldec_candidate r)
                                            ef))) running) -> 
 (forall cnd, ~In cnd (fst (split running)) -> sf_spec.first_choices candidate (in_record r) cnd es 0) ->
-Forall (fun x => let (cnd, n) := (x: candidate * nat) 
-                 in sf_spec.first_choices candidate (in_record r) cnd es n) running ->
-sf_spec.first_choices candidate (in_record r) cd (es ++ ef) ct. 
+Forall (fun x => let (cnd, n) := (x: candidate * N) 
+                 in sf_spec.first_choices candidate (in_record r) cnd es (N.to_nat n)) running ->
+sf_spec.first_choices candidate (in_record r) cd (es ++ ef) (N.to_nat ct). 
 Proof.
 induction ef; intros.
 - simpl in *. rewrite Forall_forall in *. specialize (H1 _ H). simpl in H1.
@@ -871,29 +877,50 @@ induction ef; intros.
            assert (X := increment_same_s cd running NODUP).
            destruct X.
            exfalso. eapply tabulate_not_0; [ | | | apply H]; eauto.
-           apply increment_nodup. auto.
-         - constructor. auto. 
+           apply increment_nodup. auto. intro. rewrite N.eq_add_0 in H1. intuition; congruence.
+         - assert (exists p', N.to_nat (N.pos p) = S p').
+           rewrite Znat.positive_N_nat.
+           apply Pnat.Pos2Nat.is_succ. destruct H2. rewrite H2 in *.
+           apply sf_spec.first_choices_selected; auto. 
            destruct (in_dec rel_dec_p cd (fst (split running))).
-           + eapply IHef; eauto.
+           + rewrite <- (Nnat.Nat2N.id x). eapply IHef; eauto.
              edestruct in_split. apply i.
              eapply tab_inc_s; auto.
              apply increment_nodup. eauto.
-             rewrite Heqp. simpl. eauto.
-             apply H2. eapply increment_spec in H2; eauto.
+             rewrite Heqp. simpl. 
+             assert (N.of_nat x+1 = N.pos p).
+             assert (1 = (N.of_nat 1)). auto. rewrite H4.
+             rewrite <- Nnat.Nat2N.inj_add.
+             rewrite Plus.plus_comm. simpl (1 + x)%nat.
+             rewrite <- H2. rewrite Nnat.N2Nat.id. auto.
+             rewrite H4.
+             eauto.
+             apply H3. eapply increment_spec in H3; eauto.
            + destruct (in_dec opt_eq_dec_cand (Some cd) l).
-             * eapply IHef; eauto.
+             * rewrite <- (Nnat.Nat2N.id x).
+               eapply IHef; eauto.
                rewrite Heqp. simpl.
                apply tab_inc_s_l; auto.
+               assert (N.of_nat x+1 = N.pos p).
+               assert (1 = (N.of_nat 1)). auto. rewrite H3.
+               rewrite <- Nnat.Nat2N.inj_add.
+               rewrite Plus.plus_comm. simpl (1 + x)%nat.
+               rewrite <- H2. rewrite Nnat.N2Nat.id. auto.
+               rewrite H3.
+               eauto.
              * copy n. eapply increment_spec in n; eauto.
                eapply tabulate_not_in_l in n; eauto.
-               assert (1 = (S ct)). eapply NoDup_In_fst; [ | eauto | eauto ].
+               assert (1 = (Npos p)). eapply NoDup_In_fst; [ | eauto | eauto ].
                apply tabulate_nodup. apply increment_nodup. auto.
-               inv H3. change 0 with (0 + 0). 
+               assert (1%nat = (S x)). rewrite <- H2.
+               rewrite <- H4. simpl. auto. 
+               rewrite <- H4 in *. inv H5.
+               change 0%nat with (0 + 0)%nat. 
                { apply first_choices_app. 
                  - apply H0. auto.
                  - eapply selected_not_in; eauto.
                } 
-               apply increment_nodup; auto.
+               apply increment_nodup; auto. constructor.
        }
      * apply sf_spec.first_choices_not_selected. intro.
        apply n. eapply sf_spec.selected_candidate_unique; eauto.
@@ -926,13 +953,12 @@ induction ef; intros.
     intuition.
     eapply IHef; eauto. rewrite Heqp. simpl. auto.
 Qed.
-Print sf_imp.tabulate.
 
 Lemma tabulate'_first_choices : forall l cd ct  r,
 In (cd, ct) (sf_imp.tabulate' _ _ (fst (sf_imp.option_split
                                       (map (sf_imp.next_ranking candidate reldec_candidate r)
                                            l)))) -> 
-sf_spec.first_choices candidate (in_record r) cd (l) ct. 
+sf_spec.first_choices candidate (in_record r) cd (l) (N.to_nat ct). 
 Proof.
 intros.
 rewrite <- app_nil_l at 1.
@@ -944,8 +970,8 @@ Qed.
 
 Lemma tabulate_correct : forall rec election rs election',
 sf_imp.tabulate candidate _ rec election = (rs, election') ->
-Forall (fun (x: (candidate * nat)) => let (cd, fc) := x in
-                 sf_spec.first_choices candidate (in_record rec) cd election fc) rs.
+Forall (fun (x: (candidate * N)) => let (cd, fc) := x in
+                 sf_spec.first_choices candidate (in_record rec) cd election (N.to_nat fc)) rs.
 Proof.
 intros.
 unfold sf_imp.tabulate in H. destruct (sf_imp.option_split
@@ -966,7 +992,7 @@ clear H0.
 apply tabulate'_first_choices in PRM. auto.
 Qed.
 
-Lemma leb_false :
+(*Lemma leb_false :
 forall n0  n,
 NPeano.leb n0 n = false ->
 n <= n0.
@@ -976,7 +1002,7 @@ induction n0; intros.
 - simpl in *.  destruct n.
   omega. 
   apply IHn0 in H. omega.
-Qed.
+Qed.*)
 
 
 Lemma tabulate_sorted : 
@@ -991,8 +1017,8 @@ unfold sf_imp.tabulate in H. destruct (sf_imp.option_split
                 election)) eqn:?.
 inv H. apply insertion_sort_sorted.
 intros. unfold sf_imp.cnle. destruct b. 
-destruct a. simpl in *. apply leb_false in H.
-apply NPeano.leb_le. auto.
+destruct a. simpl in *. rewrite N.leb_le in *.
+rewrite N.leb_gt in *. apply N.lt_le_incl in H. auto.
 Qed.
 
 Lemma tabulate_continuing :
@@ -1066,9 +1092,9 @@ Lemma tabulate''_first_choices_complete : forall ef cd ct es running r
 (NODUP : NoDup (fst (split running))), 
 (forall cnd cnt, 
 cnt <> 0 ->
-sf_spec.first_choices candidate (in_record r) cnd es cnt -> In (cnd, cnt) running) ->
+sf_spec.first_choices candidate (in_record r) cnd es (N.to_nat cnt) -> In (cnd, cnt) running) ->
 ct <> 0 -> 
-sf_spec.first_choices candidate (in_record r) cd (es ++ ef) ct ->
+sf_spec.first_choices candidate (in_record r) cd (es ++ ef) (N.to_nat ct) ->
 In (cd, ct) (sf_imp.tabulate'' candidate _ 
                                (fst (sf_imp.option_split
                                       (map (sf_imp.next_ranking candidate reldec_candidate r)
@@ -1098,7 +1124,7 @@ Admitted. *)
 
 Lemma tabulate'_first_choices_complete : forall l cd ct r,
 ct <> 0 ->
-sf_spec.first_choices _ (in_record r) cd l ct ->
+sf_spec.first_choices _ (in_record r) cd l (N.to_nat ct) ->
 In (cd, ct) (sf_imp.tabulate' _ _ 
    (fst (sf_imp.option_split (map (sf_imp.next_ranking _ _ r) l)))).
 Proof.
@@ -1106,12 +1132,13 @@ intros.
 unfold sf_imp.tabulate'.
 rewrite <- (app_nil_l l) in H0.
 eapply tabulate''_first_choices_complete; eauto; try solve [constructor].
-intros. inv H2. congruence.
+intros. inv H2. assert (cnt = 0). rewrite <- Nnat.Nat2N.inj_iff in H3. 
+rewrite Nnat.N2Nat.id in H3. auto. subst. congruence.
 Qed.
 
 Lemma tabulate_first_choices_complete : forall l cd ct r,
 ct <> 0 -> 
-sf_spec.first_choices _ (in_record r) cd l ct ->
+sf_spec.first_choices _ (in_record r) cd l (N.to_nat ct) ->
 In (cd, ct) (fst (sf_imp.tabulate _ _ r l)). 
   intros.
   unfold sf_imp.tabulate.
@@ -1133,13 +1160,11 @@ Proof.
 intro. intros.
 destruct x, y, z.
 unfold boolCmpToProp in *. simpl in *.
-generalize dependent n0. revert n1.
-induction n; intros.
-simpl in *. auto.
-simpl in *. destruct n0. inv H.
-simpl in *.
-destruct n1. auto.
-eapply IHn; eauto.
+destruct (n <=? n0) eqn:?, (n0 <=? n1) eqn:?, (n <=? n1) eqn:?; auto.
+rewrite N.leb_le in *.
+rewrite N.leb_gt in *.
+eapply N.le_trans in Heqb0; eauto.
+rewrite N.le_ngt in *. auto.
 Qed.
 
 
@@ -1215,7 +1240,7 @@ intros.
 destruct (sf_imp.tabulate _ _ rec election) eqn:?. inv H.
 destruct rs. 
 - simpl in *. auto.
-- simpl in *. destruct p. rewrite <- EqNat.beq_nat_refl.
+- simpl in *. destruct p. rewrite N.eqb_refl.
   simpl. rewrite Forall_forall.
   intros. simpl in *.
   destruct H. 
@@ -1246,41 +1271,56 @@ destruct rs.
            - eapply tabulate_participates; eauto. instantiate (1:=rec). rewrite Heqp.
              simpl. left. reflexivity.
            - intros.
-             assert (n = n0); [ | subst n0 ].
+             assert (N.to_nat n = n0); [ | subst n0 ].
              { eapply sf_spec.sf_first_choices_unique in H0; [ | apply H1]. auto. }
              rewrite Forall_forall in H3.
              destruct H.
              unfold sf_spec.participates in H5.
              destruct H5.
              destruct H5. destruct H6. destruct H6.
-             destruct (NPeano.Nat.eq_dec n m). omega.
-             cut (In (c', m) rs). intros.
-             apply H3 in H8. unfold boolCmpToProp in H8.
-             simpl in *. destruct (NPeano.leb n m) eqn:?; try contradiction.
-             apply NPeano.leb_le in Heqb. auto. 
-             edestruct (rel_dec_p c' x).
-             subst.
-             eapply sf_spec.sf_first_choices_unique in H4; [ | apply H1]. intuition.
-             apply tabulate_first_choices_complete in H4. 
-             rewrite Heqp in H4. simpl in H4. 
-             destruct H4. congruence. auto.
-             intro.
-             subst.
-             eapply ELIMO in H4. auto.
-             unfold sf_spec.participates.
-             exists x0.
-             eauto.
+             destruct (NPeano.Nat.eq_dec (N.to_nat n) m). 
+             + omega.
+             + cut (In (c', (N.of_nat m)) rs). 
+               * intros.
+                 apply H3 in H8. unfold boolCmpToProp in H8.
+                 simpl in *. destruct (n <=? N.of_nat m) eqn:?; try contradiction.
+                 apply N.leb_le in Heqb.  
+                 edestruct (rel_dec_p c' x).
+                 subst.
+                 eapply sf_spec.sf_first_choices_unique in H4; [ | apply H1]. intuition.
+                 rewrite <- (Nnat.Nat2N.id m) in H4.
+                 apply tabulate_first_choices_complete in H4. 
+                 rewrite Heqp in H4. simpl in H4. 
+                 destruct H4. congruence.
+                 destruct (n <=? N.of_nat m) eqn:?; auto.
+                 rewrite N.leb_le in Heqb0.
+                 rewrite N.lt_eq_cases in Heqb0.
+                 destruct Heqb0. rewrite Znat.N2Z.inj_lt in H9. 
+                 rewrite (Znat.Nat2Z.inj_le (N.to_nat n) m). rewrite Znat.N_nat_Z in *.
+                 rewrite Znat.nat_N_Z in *. rewrite BinInt.Z.lt_eq_cases. auto.
+                 subst. rewrite (Nnat.Nat2N.id) in *. intuition.
+                 rewrite N.leb_gt in Heqb0. clear - Heqb.
+                 rewrite Znat.N2Z.inj_le in Heqb.
+                 rewrite Znat.nat_N_Z in *.
+                 rewrite Znat.Nat2Z.inj_le.
+                 rewrite Znat.N_nat_Z. auto.
+                 intro. rewrite H9 in *.
+                 eapply ELIMO in H4. auto.
+                 unfold sf_spec.participates.
+                 exists x0.
+                 eauto.
+               * admit.
          } 
     *  apply cnlt_trans.
   + assert (In (x, n) (filter
-              (fun x0 : candidate * nat =>
-               let (_, v') := x0 in EqNat.beq_nat n v') rs)).
+              (fun x0 : candidate * N =>
+               let (_, v') := x0 in n =? v') rs)).
     rewrite filter_In. split.
     * rewrite in_map_iff in H. destruct H. destruct x0. simpl in H. intuition.
       subst. rewrite filter_In in H1. intuition.
-      apply EqNat.beq_nat_true in H0. subst.
+      apply N.eqb_eq in H0. subst.
       auto.
-    * symmetry. apply EqNat.beq_nat_refl.
+    * symmetry. symmetry. apply N.eqb_refl .
     * clear H.
       rewrite filter_In in H0. destruct H0.
       assert (SRTD := tabulate_sorted _ _ _ _ Heqp).
@@ -1291,14 +1331,14 @@ destruct rs.
       simpl in *. specialize (CRCT ((x, n))).
       intuition. clear H1.
       unfold sf_spec.is_loser.
-split.
+      split.
       split.
       admit. (*TODO*)
       admit.
       intros ? ? ? [??] ? ?.
       eapply sf_spec.sf_first_choices_unique in H5; eauto. subst.
       rewrite Forall_forall in H4.
-      specialize (H4 (c', m)).
+      specialize (H4 (c', (N.of_nat m))).
       destruct (rel_dec_p c c').
       subst.
       assert (CRCT := tabulate_correct _ _ _ _ Heqp).
@@ -1308,18 +1348,19 @@ split.
       eapply sf_spec.sf_first_choices_unique in H7; eauto.
       subst.
       auto.
-      assert (In (c', m) rs).
+      assert (In (c', N.of_nat m) rs).
+      rewrite <- Nnat.Nat2N.id in H7.
       apply tabulate_first_choices_complete in H7.
       rewrite Heqp in *. simpl in H7. destruct H7.
       inv H5. intuition.
       auto.
       intro.
-      subst.
+      rewrite H5 in *. clear H5.
       apply ELIMO in H7; auto.
       intuition.
       unfold boolCmpToProp in H8. simpl in H8.
-      destruct (NPeano.leb n m) eqn:?; intuition.
-      apply NPeano.Nat.leb_le in Heqb. auto.
+      destruct (n <=? N.of_nat m) eqn:?; intuition.
+      apply N.leb_le in Heqb. admit.
       apply cnlt_trans.
 Qed.
 
