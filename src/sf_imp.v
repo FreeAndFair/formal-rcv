@@ -54,7 +54,7 @@ match l with
 | Some x :: t => x :: drop_none t
 | [] => []
 end.
-
+Locate "+".
 Fixpoint increment (r : list (candidate * N)) (c : candidate) :=
 match r with 
 | (c1, n) :: t => if (eq_dec c1 c) then (c1, (n + 1)) :: t else (c1, n) :: increment t c

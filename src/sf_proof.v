@@ -1377,6 +1377,13 @@ right. auto.
 Qed.
 
 
+Lemma N_nat_le_inj :
+forall x1 n,
+x1 <= n <-> (N.to_nat x1 <= N.to_nat n)%nat.
+Proof.
+intros. rewrite Znat.N2Z.inj_le. rewrite Znat.Nat2Z.inj_le.
+repeat rewrite Znat.N_nat_Z. intuition.
+Qed.
 
 Lemma tabulate_total_selected : forall r election election' vs,
 sf_imp.tabulate _ _ r election = (vs, election') ->
@@ -1414,48 +1421,74 @@ induction t; intros.
 Qed.
 
 
-Lemma tabulate_not_in : 
-  forall (rec : sf_imp.record candidate)
-         (election : sf_imp.election candidate) (rs : list (candidate * nat))
-         (election' : sf_imp.election candidate) cd,
-    sf_imp.tabulate candidate reldec_candidate rec election = (rs, election') ->
-    ~In cd (fst (split rs)) -> 
-    sf_spec.first_choices candidate (in_record rec) cd election 0.
-Proof.
-intros. 
-eapply tabulate_correct in H. rewrite Forall_forall in H.
-specialize (H (cd, 0)).  simpl in *. apply H.
-Abort. 
-
-
-
 Lemma ss_last :
 forall l c n,
 StronglySorted (boolCmpToProp (sf_imp.cnle candidate)) l ->
 sf_imp.last_item candidate l = Some (c, n) ->
-Forall (fun (r : candidate * nat) => let (_, y) := r in y <= n) l.
+Forall (fun (r : candidate * N) => let (_, y) := r in y <= n) l.
 Proof.
 induction l; intros.
-- simpl in *. intuition.
+- simpl in *. congruence. 
 - apply last_item_cons in H0.  
   rewrite Forall_forall; intros.
   intuition. subst.
-  inv H1. auto. inv H0.
-  inv H.
-  destruct H1.
-  + subst. destruct x. 
-    rewrite Forall_forall in H5.
-    specialize (H5 (c, n)).
+  inv H1. apply N.le_refl.  
+  inv H0.
+  destruct H1. 
+  + subst. destruct x.  inv H.
+    rewrite Forall_forall in *.
+    specialize (H4 (c, n)).
     apply last_item_in in H2. intuition.
     unfold boolCmpToProp in H.
     simpl in *.
-    destruct (NPeano.leb n0 n) eqn:?; try contradiction.
-    rewrite NPeano.leb_le in Heqb. auto.
+    destruct (n0 <=? n) eqn:?; try contradiction.
+    rewrite N.leb_le in Heqb. auto.
   + eapply IHl in H2; eauto.
     rewrite Forall_forall in H2.
-    apply H2.  auto.
+    apply H2.  auto. inv H. auto.
 Qed.
 
+Lemma lt_of_nat :
+forall n nn,
+N.of_nat n < nn <->
+(n < N.to_nat nn)%nat.
+Proof.
+intros. repeat rewrite Znat.N2Z.inj_lt.
+rewrite Znat.nat_N_Z.
+rewrite Znat.Nat2Z.inj_lt. rewrite Znat.N_nat_Z.
+split; auto.
+Qed.
+
+Lemma gt_of_nat :
+forall n nn,
+N.of_nat n > nn <->
+(n > N.to_nat nn)%nat.
+Proof.
+intros. repeat rewrite Znat.N2Z.inj_gt.
+rewrite Znat.nat_N_Z.
+rewrite Znat.Nat2Z.inj_gt. rewrite Znat.N_nat_Z.
+split; auto.
+Qed.
+
+Lemma gt_of_nat2 :
+forall n nn,
+ n > N.of_nat nn <->
+(N.to_nat n >  nn)%nat.
+Proof.
+intros. repeat rewrite Znat.N2Z.inj_gt.
+rewrite Znat.nat_N_Z.
+rewrite Znat.Nat2Z.inj_gt. rewrite Znat.N_nat_Z.
+split; auto.
+Qed.
+
+Lemma NNatex :
+forall x0,
+exists nx0, N.to_nat nx0 = x0. 
+intros. induction x0. exists 0. auto.
+destruct IHx0. exists (N.succ x).
+rewrite Nnat.N2Nat.inj_succ. auto.
+Qed.
+          
 
 Lemma run_election'_correct : 
   forall fuel election winner rec' rec tbreak
@@ -1471,10 +1504,10 @@ induction fuel; intros.
                        simpl in *; try congruence.
   destruct (sf_imp.last_item candidate l) eqn:?; try congruence.
   destruct p.
-  destruct (sf_imp.gtb_nat (n * 2) (length e)) eqn:?.
+  destruct ( sf_imp.gtb_N (n * 2) (N.of_nat (length e))) eqn:?.
   + inv H.
     apply sf_spec.winner_now. unfold sf_spec.majority.
-    intros. assert (winner_votes = n).
+    intros. assert (winner_votes = (N.to_nat n)).
     { apply tabulate_correct in Heqp.
       rewrite Forall_forall in Heqp. specialize (Heqp (winner, n)).
       apply last_item_in in Heqo. intuition.
@@ -1484,7 +1517,9 @@ induction fuel; intros.
     { apply tabulate_total_selected in Heqp.
       eapply total_selected_unique; eauto. }
     subst. 
-    rewrite sf_imp.gtb_nat_gt in Heqb. auto. apply _.
+    rewrite sf_imp.gtb_nat_gt in Heqb. rewrite gt_of_nat2 in Heqb.  
+    rewrite Nnat.N2Nat.inj_mul in Heqb. auto. 
+    apply _.
   + unfold sf_imp.find_eliminated_noopt in *. 
     destruct (tbreak (sf_imp.get_bottom_votes candidate l)) eqn:?. 
     * rename c0 into loser.
@@ -1500,13 +1535,16 @@ induction fuel; intros.
           assert (~ sf_spec.majority _ (in_record rec) election c).
           { intro.
             unfold sf_spec.majority in *.
-            specialize (H1 (length e) n).
+            specialize (H1 (length e) (N.to_nat n)).
             copy Heqp.
             apply tabulate_total_selected in H2. intuition. 
             apply tabulate_correct in Heqp. 
             rewrite Forall_forall in Heqp.
             specialize (Heqp (c, n)). simpl in *.
             apply last_item_in in Heqo. intuition.
+            change 2%nat with (N.to_nat 2) in H4.
+            rewrite <- Nnat.N2Nat.inj_mul in H4.
+            rewrite <- gt_of_nat2 in H4.
             rewrite <- sf_imp.gtb_nat_gt in H4. congruence.
             apply _.
           }
@@ -1519,7 +1557,7 @@ induction fuel; intros.
           eapply ss_last in Heqp; eauto.
           rewrite Forall_forall in *.
           apply H1. clear H1. intro; intros.
-          assert (winner_votes = n).
+          assert (winner_votes = (N.to_nat n)).
           { apply last_item_in in Heqo.
             apply tabulate_correct in H2.
             rewrite Forall_forall in H2. eapply H2 in Heqo; clear H2.
@@ -1527,11 +1565,14 @@ induction fuel; intros.
           subst.
           unfold sf_spec.majority in H0.
           copy FCX.
+          destruct (NNatex x0).
+          rewrite <- H4 in H3.
           apply tabulate_first_choices_complete in H3; auto.
-          rewrite H2 in *. simpl in H3.
-          specialize (Heqp (x, x0)).
+          rewrite H2 in *. simpl in *.
+          specialize (Heqp (x, x1)).
           intuition.
-          eapply H0 in FCX; eauto. omega. 
+          eapply H0 in FCX; eauto. subst. rewrite  N_nat_le_inj in H5. omega. 
+          subst. intro. subst. intuition.
         - eauto.
         - rewrite update_eliminated_in_rec_eq_noc.
           eapply IHfuel.
@@ -1570,19 +1611,19 @@ NoDup allc ->
 ~ In c
          (map fst
             (filter
-               (fun x : candidate * nat =>
-                let (_, ct) := x in EqNat.beq_nat ct 0)
+               (fun x : candidate * N =>
+                let (_, ct) := x in  ct =? 0)
                (sf_imp.tabulate'' candidate reldec_candidate l
                   (sf_imp.increment candidate reldec_candidate
                      (map (fun x : candidate => (x, 0)) allc) c)))).
 Proof.
 intros. intro.
 apply in_map_iff in H0. destruct H0. destruct H0. destruct x. simpl in *. subst.
-apply filter_In in H1. destruct H1. apply EqNat.beq_nat_true_iff in H1.
+apply filter_In in H1. destruct H1. rewrite N.eqb_eq in H1. 
 subst. edestruct increment_same_s. Focus 2. 
  eapply tabulate_not_0. Focus 2. eauto. apply increment_nodup. 
 instantiate (1:=map (fun x : candidate => (x, 0)) allc). apply no_dup_map_allc; auto.
-auto.
+rewrite N.add_1_r. apply N.succ_0_discr.
 eauto. apply no_dup_map_allc. auto.
 Qed.
 
@@ -1602,7 +1643,7 @@ induction l.
     eapply tabulate_not_0. 
     * apply increment_nodup. eauto. 
     * apply H0.
-    * auto.
+    * rewrite N.add_1_r. apply N.succ_0_discr.
     * eauto.
   + apply IHl in H. 
     eapply increment_neq' in H; auto.
@@ -1646,10 +1687,10 @@ induction election; intros.
           + apply increment_neq; eauto.
             specialize (PART c). apply in_map_iff. exists c. split.
             * reflexivity. 
-            * apply EqNat.beq_nat_true_iff in H2. subst.
+            * rewrite N.eqb_eq in H2. subst.
               apply tabulate_0_running in H1. apply in_map_iff in H1.
               destruct H1. destruct H1. inv H1. auto. apply no_dup_map_allc. auto.
-          + rewrite (EqNat.beq_nat_true_iff) in H2. subst. 
+          + rewrite N.eqb_eq in H2. subst. 
             eapply tabulate_0_running. apply no_dup_map_allc; auto.
             eauto.
         - eapply tabulate''_same in H0. 
@@ -1659,11 +1700,11 @@ induction election; intros.
           + apply no_dup_map_allc; auto.
           + eapply increment_neq; auto.
             apply in_map_iff. exists c.
-            intuition. apply EqNat.beq_nat_true_iff in H2. subst. 
+            intuition. apply N.eqb_eq in H2. subst. 
             apply tabulate_0_running in H0. eapply increment_neq' in H0; auto.
             apply in_map_iff in H0; intuition_nosplit; auto.
             apply increment_nodup. apply no_dup_map_allc. auto.
-          + apply in_map_iff. exists c. intuition. apply EqNat.beq_nat_true_iff in H2. subst. 
+          + apply in_map_iff. exists c. intuition. apply N.eqb_eq in H2. subst. 
             apply tabulate_0_running in H0. eapply increment_neq' in H0; auto.
             apply in_map_iff in H0; intuition_nosplit; auto.
             apply increment_nodup. apply no_dup_map_allc. auto.
