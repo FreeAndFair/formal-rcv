@@ -136,7 +136,7 @@ Section ranked_preference_voting_properties.
     forall c', c <> c' -> wins_pairwise_contest c c' e.
 
   Definition condorcet_loser (c:candidate) (e:election) :=
-    forall c', c <> c' -> wins_pairwise_contest c' c e.
+    forall c', c <> c' -> ~wins_pairwise_contest c c' e.
 
 
   Section criteria_definitions.
