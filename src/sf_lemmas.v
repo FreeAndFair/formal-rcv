@@ -388,9 +388,9 @@ left. unfold sf_spec.selected_candidate. intuition.
 eauto.
 rewrite <- continuing2_continuing in H.
 unfold continuing2 in H. destruct H. destruct H.
-inv H. inv H8. rewrite Forall_forall in H0. intuition.
+inv H. inv H8. rewrite Forall_forall in H0. firstorder.
 destruct H. destruct H2. inv H0. inv H9. rewrite Forall_forall in *.
-intuition.
+firstorder.
 right. unfold sf_spec.selected_candidate. intuition.
 eauto.
 Qed.
@@ -630,7 +630,7 @@ forall A ed (i : A) l,
 In i (remove_dups ed l) <-> In i l.
 Proof.
 intuition.
-unfold remove_dups in H. apply remove_dups_in in H. intuition.
+unfold remove_dups in H. apply remove_dups_in in H. firstorder.
 unfold remove_dups. apply In_remove_dups'. auto.
 Qed.
 

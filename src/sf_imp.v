@@ -205,7 +205,7 @@ let get_candidates := (map (next_ranking nil) el) in
 let (next_ranks, _) := option_split (get_candidates) in
 let initial := map (fun x => (x, 0)) all_candidates in
 let counts := tabulate'' next_ranks initial in
-map fst (filter (fun (x : candidate * N) => let (_, ct) := x in N.eqb ct 0) counts).
+map (@fst _ _) (filter (fun (x : candidate * N) => let (_, ct) := x in N.eqb ct 0) counts).
 
 Definition run_election elect all_candidates :=
 let initial_selected := drop_none (fst (option_split (map (next_ranking nil) elect))) in
