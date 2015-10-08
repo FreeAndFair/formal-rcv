@@ -47,7 +47,6 @@ Section election_spec.
          (if it exists) which contains at least one
          continuing candidate.
       *)
-
     Definition overvote (r : rankSelection) := 
        exists c1 c2, In c1 r /\ In c2 r /\ c1 <> c2.
 
@@ -198,7 +197,7 @@ Section election_spec.
       intros.
       induction b.
       inversion H.
-      inv H; inv H0; try rewrite Forall_forall in *; intuition.
+      inv H; inv H0; try rewrite Forall_forall in *; firstorder.
     Qed. 
 
     Lemma exhausted_ballot_next_ranking_iff : forall (b : ballot),
@@ -229,7 +228,6 @@ Section election_spec.
     Definition selected_candidate (b:ballot) (c:candidate) :=
       continuing_ballot b /\
       exists r, next_ranking b r /\ In c r.
-
 
 
     (** If a candidate receives a majority of the first choices, that
@@ -355,53 +353,47 @@ Now, should this ballot be considered an overvote and removed;
 or should it count as a vote for D?  The statue language is
 unclear.
 
-The formal specification above counts this situation as a vote for D.
+However, actual practice seems to be that a ballot is decared an overvote
+as soon as the first ranking with more than one selection becomse relevant;
+i.e., when all properly-selected candidates above it have been eliminated.
+In other words, the ballot is considered to be truncated at the position
+of the first ranking with more than one selection.
+
+The formal specification above follows suit, and counts this situation
+as an overvote as soon as A is eliminated.
 *)
 
-    (**  Whenever a ballot selects a candidate, that candidate
-         is viable.
+    (**  Whenever a ballot selects a candidate, that candidate is not eliminated.
       *)
     Lemma selected_candidate_not_eliminated (b:ballot) :
       forall c, selected_candidate b c -> ~eliminated c.
     Proof.
       induction b.
-      unfold selected_candidate. intros c [Hc [r [??]]].
-(*      elim H.
-      intros c [Hc [r [??]]].
-      destruct H as [[??]|[??]].
-      apply IHb.
-      split.
-      red; intro.
-      destruct H2.
-      apply Hc.
-      left. red; simpl; intros.
-      destruct H3. subst rank.
-      apply H; auto.
-      red in H2. eapply H2; eauto.
-      apply Hc.
-      right.
-      destruct H2 as [r' [??]].
-      assert (r = r').
-      apply (next_ranking_unique b); auto.
-      subst r'.
-      exists r; split; auto.
-      simpl.
-      left; split; auto.
+      unfold selected_candidate. intros c [Hc [r [??]]]. inv H.
+      unfold selected_candidate. intros c [Hc [r [??]]]. inv H.
+      * apply IHb. split; eauto.
+        red; intro.
+        apply Hc.
+        destruct H.
+        elim H; eauto.
+        destruct H as [r' [??]].
+        right. exists r'. split; auto.
+        apply next_ranking_eliminated; auto.
+      * intro Helim.
+        elim Hc. red.
+        right. exists r. split; auto.
+        eapply next_ranking_valid; eauto.
+        destruct H5; auto.
+        red. exists c. exists c0. intuition.
+        subst c0. contradiction.
+    Qed.
 
-      exists r. split; auto.
-      subst a.
-      intro.
-      apply Hc.
-      destruct H as [c' [??]].
-      destruct (classic (c=c')).
-      subst c'. elim H2. auto.
-      right.
-      exists r. split; auto.
-      simpl.
-      right.
-      split; auto. exists c'; split; auto.
-      exists c, c'. intuition. TODO: FIX*)
-    Admitted.
+    (* The next ranking for a ballot is in the ballot. *)
+    Lemma next_ranking_in_ballot (b:ballot) :
+      forall r, next_ranking b r -> In r b.
+    Proof.
+      intros r H. induction H; intuition; eauto.
+    Qed.
 
   End ballot_properties.
 
