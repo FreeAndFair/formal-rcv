@@ -14,6 +14,75 @@ Section sf_spec_properties.
   Let ballot := list rankSelection.
   Let election := list ballot.
 
+  Check sf_spec.first_choices.
+
+  Lemma next_ranking_elim_unchanged :
+    forall (elim elim':candidate -> Prop) b c r,
+      (forall x, elim x -> elim' x) ->
+      ~elim' c ->
+      sf_spec.next_ranking candidate elim b r ->
+      In c r ->
+      sf_spec.next_ranking candidate elim' b r.
+  Proof.
+    intros.
+    induction H1.
+    * apply sf_spec.next_ranking_eliminated; auto.
+      rewrite Forall_forall in *; firstorder.
+    * apply sf_spec.next_ranking_valid with c; auto.
+  Qed.
+
+  Lemma selected_candidate_elim_unchanged :
+    forall (elim elim':candidate -> Prop) b c,
+      sf_spec.selected_candidate candidate elim b c ->
+      (forall x, elim x -> elim' x) ->
+      ~elim' c ->
+      sf_spec.selected_candidate candidate elim' b c.
+  Proof.
+    intros.
+    destruct H.
+    destruct H2 as [r [Hr Hc]].
+    split.
+    * intro. apply H.
+      destruct H2.
+      elim H2.
+      exists r. eapply next_ranking_elim_unchanged; eauto.
+      destruct H2 as [r' [??]].
+      assert (r = r').
+      { cut (sf_spec.next_ranking candidate elim' b r'); [ apply sf_spec.next_ranking_unique; auto | auto ].
+        eapply next_ranking_elim_unchanged; eauto.
+      }
+      subst r'.
+      right; exists r; split; auto.
+    * exists r; split; auto.
+      eapply next_ranking_elim_unchanged; eauto.      
+  Qed.
+
+  (** As we eliminate candidates, the first-choice counts of the remaining
+      candidates increases monotonically.
+    *)
+  Lemma first_choices_monotone :
+    forall elim elim' e c m n,
+      ~elim' c ->
+      sf_spec.first_choices candidate elim c e m ->
+      sf_spec.first_choices candidate elim' c e n ->
+      (forall x, elim x -> elim' x) ->
+      m <= n.
+  Proof.
+    intros.
+    revert n H1.
+    induction H0; intros.
+    * auto with arith.
+    * inversion H3; subst; clear H3.
+      - cut (n' <= n'0). auto with arith.
+        apply IHfirst_choices; auto.
+      - elim H6.
+        eapply selected_candidate_elim_unchanged; eauto.
+    * inversion H3; subst; clear H3.
+      transitivity n'; auto with arith.
+      apply IHfirst_choices; eauto.
+  Qed.
+
+
   Let sf_may_win_election c e :=
     sf_spec.winner candidate e (fun _ => False) c.
 
@@ -130,84 +199,29 @@ Section sf_spec_properties.
     split; intros.
     destruct (classic (exists c, sf_spec.selected_candidate _ eliminated b c )); auto.
     elim H. clear H.
-    red.
-    destruct (classic (sf_spec.overvote _ eliminated b)); auto.
-    left.
-    red; intros.
-    destruct (classic (eliminated candidate0)); auto.
-    elim H0. clear H0.
-    revert candidate0 rank H1 H2 H3.
-    induction b; intros.
-    elim H1.
-    destruct (classic (exists c, In c a /\ ~eliminated c)).
-    destruct H0 as [c [??]].
-    exists c.
-    split.
-    intro.
-    destruct H5; auto.
-    apply H4.
-    red in H5.
-    apply H5 with a; simpl; auto.
-    exists a; split; simpl; auto.
-    right.
-    split; auto.
-    exists c; split; auto.
-    destruct H1.
-    subst rank.
-    elim H0. eauto.
-    destruct IHb with candidate0 rank; auto.
-    intro. apply H.
-    destruct H4 as [r [??]].
-    exists r. split; simpl; auto.
-    left.
-    split; auto.
+    rewrite sf_spec.exhausted_ballot_next_ranking_iff.
     intros.
-    destruct (classic (eliminated c)); auto.
-    elim H0.
-    eauto.
-    exists x.
-    destruct H4.
-    split; auto.
-    intro.
-    apply H4.
-    destruct H6.
-    left.
-    red; intros.
-    eapply H6.
-    simpl. right; eauto. auto.
-    right.
-    destruct H6 as [r [??]].
-    exists r; split; auto.
-    simpl in H6.
-    destruct H6; auto.
-    destruct H6; auto.
-    destruct H6. subst r.
-    contradiction.
-    destruct H5 as [r [??]].
-    exists r; split ;auto.
-    simpl.
-    left; split; auto.
-    intros.
-    destruct (classic (eliminated c)); auto.
-    elim H0; eauto.
+    destruct (sf_spec.next_ranking_spec candidate eliminated b r); auto.
+    destruct H1 as [c[?[??]]].
+    elim H0. exists c.
+    split; eauto.
+    intro. destruct H4.
+    elim H4. eauto.
+    destruct H4 as [r' [??]].
+    assert (r = r'). { eapply sf_spec.next_ranking_unique; eauto. }
+    subst r'.
+    destruct H5 as [r1 [r2 [?[??]]]].
+    rewrite Forall_forall in H1.
+    apply H7. transitivity c; firstorder.
 
     destruct H as [c ?].
     intros [?|?].
-    assert (~eliminated c).
-    eapply sf_spec.selected_candidate_not_eliminated; eauto.
-    apply H1.
-    destruct H as [r [?[??]]].
-    eapply H0; eauto.
-    clear -H.
-    induction b; simpl in *; intuition.
-    destruct H0 as [x [??]].
-    destruct H as [? [?[??]]].
-    assert( x = x0 ).
-    eapply sf_spec.next_ranking_unique; eauto.
-    subst x0.
+    destruct H as [? [r [??]]].
+    elim H0; eauto.
+    destruct H0 as [r [??]].
+    destruct H.
     apply H.
-    right.
-    exists x. split; auto.
+    right. exists r. split; auto.
   Qed.
 
   Lemma sf_forced_majority (e:election) (eliminated:candidate -> Prop) :
@@ -228,6 +242,7 @@ Section sf_spec_properties.
     subst n. clear H0.
     inversion H2; clear H2; subst.
     inversion H3; clear H3; subst.
+    * 
     destruct n'.
     simpl.
     assert( n = 0 ).
@@ -245,8 +260,7 @@ Section sf_spec_properties.
         exists a. split; simpl; auto.
         destruct H0 as [?[?[??]]].
         exists x; split; auto.
-        clear -H1.
-        induction a; simpl in *; intuition.
+        eapply sf_spec.next_ranking_in_ballot; eauto.
         eapply sf_spec.selected_candidate_not_eliminated; eauto.
         apply IHe; eauto.
         intros. apply H; auto.
@@ -263,7 +277,7 @@ Section sf_spec_properties.
     intros. apply H1; auto.
     destruct H0 as [b [??]].
     exists b; intuition.
-    apply continuing_ballot_selects in H5.
+  * apply continuing_ballot_selects in H5.
     destruct H5 as [c' ?].
     elim H4.
     replace c with c'; auto.
@@ -272,19 +286,30 @@ Section sf_spec_properties.
     destruct H2 as [r [??]].
     exists a. split; simpl; auto.
     exists r; split; simpl; auto.
-    clear -H2.
-    induction a; simpl in *; intuition.
-    eapply sf_spec.selected_candidate_not_eliminated; eauto.
-    inversion H3; clear H3; subst.
+    eapply sf_spec.next_ranking_in_ballot; eauto.
     assert (sf_spec.continuing_ballot _ eliminated a).
     apply continuing_ballot_selects.
     eauto.
-    elim H0; auto.
+    eapply sf_spec.selected_candidate_not_eliminated; eauto.
+  * inversion H3; clear H3; subst.
+    destruct H4. elim H0. auto.
     apply (IHe c winner_votes); auto.
     intros. apply H1; auto.
     destruct H0 as [b [??]].
     exists b; intuition.
   Qed.
+
+    Lemma nonzero_first_choices_selected :
+      forall (eliminated:candidate -> Prop) c e n,
+        sf_spec.first_choices _ eliminated c e n ->
+        n > 0 ->
+        exists b, In b e /\ sf_spec.selected_candidate _ eliminated b c.
+    Proof.
+      intros. induction H.
+      * omega.
+      * simpl; eauto.
+      * destruct IHfirst_choices as [b [??]]; simpl; eauto.
+    Qed.
 
 
   Section sf_spec_existential_induction.
@@ -309,70 +334,110 @@ Section sf_spec_properties.
       (n:nat)
       (viable:list candidate)
       (eliminated:candidate -> Prop),
-      (forall c, In c viable -> exists n, n > 0 /\ sf_spec.first_choices _ eliminated c e n) ->
+       (forall c, In c viable -> sf_spec.participates _ c e) ->
+      (exists c, In c viable /\ exists n, n > 0 /\ sf_spec.first_choices _ eliminated c e n) ->
       (forall c, eliminated c <-> sf_spec.participates _ c e /\ ~In c viable) ->
       1 <= length viable <= n ->
       P eliminated ->
       exists c, Q eliminated c.
     Proof.
       induction n; [ simpl; intros; omega | ].
-      intros.
+      intros viable eliminated Hviable ????.
       destruct (classic (exists c, sf_spec.majority _ eliminated e c)).
       * destruct H3 as [c ?].
         exists c. apply Hbase; auto.
       * destruct (Hind eliminated) as [loser [?[??]]]; auto.
-        + destruct viable. destruct H1. elimtype False. simpl in H1. omega.
-          exists c. apply H. simpl; auto.
+        + destruct H as [c [??]]; eauto.
         + destruct (list_remove_prop candidate viable (eq loser) loser)
             as [viable' [?[??]]]; auto.
           destruct (classic (In loser viable)); auto.
           destruct H4 as [[??]?].
           elim H4. apply H0. split; auto.
           set ( eliminated' := sf_spec.update_eliminated _ eliminated loser).
-          destruct (IHn viable' eliminated') as [c ?]; auto.
-          intros.
-          destruct (H c) as [nc [??]].
-          apply H9; auto.
-admit.           (* first choices monotone with eliminated set *)
-
-          unfold eliminated'.
-          unfold sf_spec.update_eliminated.
-          intuition.
-          apply H0 in H12; intuition.
-          apply H0 in H12; intuition.
-          apply H14. apply H9. auto.
-          subst c.
-          destruct H4 as [[??]?]; auto.
-          subst c; auto.
-          apply H9 in H1.
-          intuition.
-          destruct (classic (c = loser)).
-          subst c. auto.
-          left.
-          apply H0.
-          split; auto.
-          intros. apply H13.
-          apply H8 in H14.
-          intuition.
-          subst. intuition.
-          split; auto.
-          destruct viable'; simpl; auto.
-          - elim H3.
-            exists loser.
-            destruct (H loser) as [nloser [??]]; auto.
-            destruct (classic (In loser viable)); auto.
-            destruct H4 as [[??]?].
-            elim H4. apply H0.
-            split; auto.
-            apply sf_forced_majority with nloser; auto.
+          assert (Hviable' : exists c', In c' viable').
+          { destruct viable'; simpl; auto.
+            destruct H as [c [? [nc [??]]]].
+            exists c.
+            apply H8 in H. destruct H. elim H. subst c.
+            elim H3. exists loser.
+            apply sf_forced_majority with nc; auto.
             intros.
             destruct (H8 c'); auto.
             destruct (classic (In c' viable)); auto.
-            elim H13.
+            elim H12.
             apply H0. split; auto.
-            elim H14.
-          - omega.
-          - omega.
+            elim H13.
+            eauto.
+          }
+          destruct (IHn viable' eliminated') as [c ?]; auto.
+          - intros. apply H9 in H10. intuition.
+          - destruct H as [c [? [cn [??]]]].
+            destruct (classic (c = loser)).
+            subst c.
+            destruct Hviable' as [c' ?].
+            exists c'. split; auto.
+            destruct (sf_spec.sf_first_choices_total candidate eliminated' e c') as [n' ?].
+            destruct (sf_spec.sf_first_choices_total candidate eliminated e c') as [n'' ?].
+            exists n'; split; auto.
+            cut (n'' <= n'). intro Hn''.
+            cut (cn <= n'').  omega.
+            { destruct H4.
+              apply (H15 c'); auto.
+              split.
+              intro. apply H0 in H16. intuition.
+              apply H19.
+              apply H9 in H12; intuition.
+              apply Hviable.
+              apply H9 in H12. intuition.
+            }
+            { apply first_choices_monotone with eliminated eliminated' e c'; auto.
+              intro. hnf in H15. apply H9 in H12.
+              destruct H15.
+              apply H0 in H15.
+              intuition.
+              intuition.
+              intros. hnf. auto.
+            } 
+            
+            exists c; intuition.
+            apply H8 in H. intuition.
+            elim H12; auto.
+            destruct (sf_spec.sf_first_choices_total candidate eliminated' e c) as [cn' ?].
+            exists cn'; split; auto.
+            cut (cn <= cn'). omega.
+            apply first_choices_monotone with eliminated eliminated' e c; auto.
+            intro. hnf in H15.
+            destruct H15.
+            apply H0 in H15.
+            intuition.
+            elim H12; auto.
+            intros. hnf. auto.
+
+          - unfold eliminated'.
+            unfold sf_spec.update_eliminated.
+            intuition.
+            apply H0 in H12; intuition.
+            apply H0 in H12; intuition.
+            apply H14. apply H9. auto.
+            subst c.
+            destruct H4 as [[??]?]; auto.
+            subst c; auto.
+            apply H9 in H1.
+            intuition.
+            destruct (classic (c = loser)).
+            subst c. auto.
+            left.
+            apply H0.
+            split; auto.
+            intros. apply H13.
+            apply H8 in H14.
+            intuition.
+            subst. intuition.
+          - split; auto.
+            destruct viable'; simpl; auto.
+            destruct Hviable' as [?[]].
+            omega.
+            omega.
           - exists c.
             apply H6. auto.
     Qed.
@@ -386,34 +451,46 @@ admit.           (* first choices monotone with eliminated set *)
       destruct (list_remove_prop_weak _ (all_candidates e) eliminated)
                as [viable [?[??]]].
       apply (sf_spec_existential_induction_aux (length viable) viable); auto.
-admit.
-admit.
-admit.
-Qed.
-(*
-      intros.
-      apply H4 in H5.
-
-      intros.
-      split; intros.
-      split.
-      apply H; auto.
-      intro.
-      apply H4 in H6.
-      intuition.
-      destruct H5.
-      apply all_candidates_participates in H5.
-      apply H3 in H5. destruct H5; auto.
-      contradiction.
-      split; auto.
-      destruct H0 as [c0 [??]].
-      destruct (H3 c0).
-      apply all_candidates_participates; auto.
-      destruct viable. elim H6.
-      simpl; auto. omega.
-      contradiction.
+      * intros. apply H4 in H5. destruct H5.
+        apply (all_candidates_participates c e); auto.
+      * destruct H0 as [c [n[??]]].
+        exists c; split; eauto.
+        destruct (nonzero_first_choices_selected eliminated c e n) as [b [??]]; auto.
+        generalize (sf_spec.selected_candidate_not_eliminated _ _ b c H7); intro.
+        assert ( sf_spec.participates candidate c e ).
+        destruct H7.
+        red; exists b. split; auto.
+        destruct H9 as [r [??]].
+        exists r; split; auto.
+        eapply sf_spec.next_ranking_in_ballot; eauto.
+        generalize (all_candidates_participates c e); intros [??].
+        apply H11 in H9.
+        apply H3 in H9.
+        intuition.
+      * intuition.
+        apply H4 in H6. intuition.
+        generalize (all_candidates_participates c e); intros [??].
+        apply H8 in H6.
+        apply H3 in H6.
+        intuition.
+      * intuition.
+        destruct H0 as [c [n [??]]].
+        destruct (nonzero_first_choices_selected eliminated c e n) as [b [??]]; auto.
+        generalize (sf_spec.selected_candidate_not_eliminated _ _ b c H7); intro.
+        assert ( sf_spec.participates candidate c e ).
+        destruct H7.
+        red; exists b. split; auto.
+        destruct H9 as [r [??]].
+        exists r; split; auto.
+        eapply sf_spec.next_ranking_in_ballot; eauto.
+        generalize (all_candidates_participates c e); intros [??].
+        apply H11 in H9.
+        apply H3 in H9.
+        destruct H9.
+        - destruct viable. elim H9.
+          simpl. omega.
+        - contradiction.
     Qed.
-*)
 
   End sf_spec_existential_induction.
 
@@ -465,19 +542,35 @@ Qed.
   Proof.
     intros.
     apply sf_spec_existential_induction with e (fun _ => True); intuition.
-    apply sf_spec.winner_now; auto.
-    destruct (sf_loser_exists e eliminated0) as [loser ?]; auto.
-admit.
-    exists loser; intuition.
-    apply sf_spec.winner_elimination with loser; auto.
+    * apply sf_spec.winner_now; auto.
+    * destruct (sf_loser_exists e eliminated0) as [loser ?]; auto.
+      + destruct H2 as [c [n [??]]].
+        destruct (nonzero_first_choices_selected eliminated0 c e n) as [b [??]]; auto.
+        exists c.
+        generalize (sf_spec.selected_candidate_not_eliminated _ _ b c H6); intro.
+        split; auto.
+        destruct H6.
+        red; exists b. split; auto.
+        destruct H8 as [r [??]].
+        exists r; split; auto.
+        eapply sf_spec.next_ranking_in_ballot; eauto.
+      + exists loser; intuition.
+        apply sf_spec.winner_elimination with loser; auto.
   Qed.
 
+  Definition mutual_majority_invariant (e:election) (group:list candidate) (eliminated:candidate -> Prop) :=
+    majority_satisfies _ 
+      (fun b => prefers_group _ group b /\
+                exists c, In c group /\ ~eliminated c /\
+                          sf_spec.selected_candidate _ eliminated b c)
+      e.
+  
   Theorem sf_mutual_majority :
     mutual_majority_criterion candidate sf_may_win_election.
   Proof.
     red; intros. red.
     cut (forall (eliminated:candidate -> Prop) c,
-           (forall c', eliminated c' -> In c' group -> False) ->
+           mutual_majority_invariant e group eliminated ->
            sf_spec.winner _ e eliminated c ->
            In c group).
     { intuition.
@@ -487,33 +580,145 @@ admit.
       red in H2.
       destruct H as [[cin ?] [cout ?]].
       generalize (H2 cin cout H H4); intros.
-      assert (exists c r, In r b /\ In c r).
-      { clear -H5.
-        induction H5.
-        destruct H.
-        exists cin, r; intuition.
-        simpl; firstorder.
-        firstorder.
+      clear -H2 H3 H5.
+      { induction e; intros.
+      * elim H3.
+      * simpl in H3. destruct H3.
+        + clear IHe. subst b.
+          clear H2.
+          induction H5.
+          - destruct (sf_spec.sf_first_choices_total _ (fun _ => False) ((r::b) :: e) cin) as [n ?].
+            exists cin. exists n. split; auto.
+            inversion H0; subst; clear H0.
+            omega.
+            elim H3; clear H3. split.
+            intro. destruct H0.
+            apply H0.
+            exists r.
+            apply sf_spec.next_ranking_valid with cin; auto.
+            destruct H. auto.
+            destruct H0 as [r' [??]].
+            assert (r = r').
+            eapply sf_spec.next_ranking_unique; eauto.
+            apply sf_spec.next_ranking_valid with cin.
+            destruct H; auto.
+            right; auto.
+            subst r'.
+            destruct H.
+            destruct H1 as [c1 [c2 [?[??]]]].
+            elim H4.
+            transitivity cin; firstorder.
+            exists r. split; auto.
+            apply sf_spec.next_ranking_valid with cin.
+            destruct H; auto.
+            right; auto.
+            destruct H; auto.
+          - destruct IHprefers as [c [n [??]]].
+            exists c. exists n. split; auto.
+            inversion H0; subst; clear H0.
+            apply sf_spec.first_choices_selected.
+            destruct H3. split.
+            intro. apply H0.
+            destruct H2.
+            left. intro.
+            apply H2.
+            destruct H3 as [r ?].
+            exists r. apply sf_spec.next_ranking_eliminated.
+            rewrite Forall_forall. simpl; auto.
+            intros [?[?[??]]]. elim H4.
+            auto.
+            right.
+            destruct H2 as [r [??]].
+            exists r; split; auto.
+            inversion H2; subst; clear H2.
+            auto.
+            destruct H3 as [?[?[??]]]. elim H2.
+            destruct H1 as [r [??]].
+            exists r; split; auto.
+            apply sf_spec.next_ranking_eliminated.
+            rewrite Forall_forall. simpl; auto.
+            intros [?[?[??]]]. elim H3.
+            auto.
+            auto.
+            apply sf_spec.first_choices_not_selected; auto.
+            intro. apply H3.
+            destruct H0. split.
+            intro. apply H0.
+            destruct H2. left.
+            intro. apply H2.
+            destruct H4 as [r ?].
+            exists r.
+            inversion H4; subst; clear H4.
+            auto.
+            elim H9.
+            right.
+            destruct H2 as [r [??]].
+            exists r; split; auto.
+            apply sf_spec.next_ranking_eliminated.
+            rewrite Forall_forall; auto.
+            intros [?[?[??]]]. elim H7.
+            auto.
+            destruct H1 as [r [??]].
+            exists r. split; auto.
+            inversion H1; subst; clear H1.
+            auto.
+            elim H2.
+          - destruct IHprefers as [c [n [??]]].
+            destruct (sf_spec.sf_first_choices_total _ (fun _ => False) ((r::b)::e) c').
+            exists c'. exists x. split; auto.
+            inversion H4; subst; clear H4.
+            omega.
+            elim H8.
+            split.
+            intro. destruct H4.
+            apply H4.
+            exists r.
+            apply sf_spec.next_ranking_valid with c'.
+            destruct H1. auto.
+            auto.
+            destruct H4 as [r' [??]].
+            inversion H4; subst; clear H4.
+            destruct H1.
+            rewrite Forall_forall in H11.
+            apply H11 in H1. auto.
+            destruct H6 as [?[?[?[??]]]].
+            destruct H1.
+            elim H7.
+            transitivity c'; auto.
+            symmetry; auto.
+            exists r; split; auto.
+            2: destruct H1; auto.
+            apply sf_spec.next_ranking_valid with c'.
+            destruct H1; auto.
+            auto.
+
+        + destruct IHe as [c [n [??]]]; auto.
+          destruct (classic (sf_spec.selected_candidate _ (fun _ => False) a c)).
+          exists c. exists (S n).
+          split. omega.
+          apply sf_spec.first_choices_selected; auto.
+          exists c. exists n.
+          split; auto.
+          apply sf_spec.first_choices_not_selected; auto.
       }
-      firstorder.
+      exists x; split; auto.
+      apply (H1 (fun _ => False)); auto.
+      red; simpl; auto.
 admit.
-      exists x. split; auto.
       apply (H1 (fun _ => False)); auto.
-      apply (H1 (fun _ => False)); auto.
+      red; simpl; auto.
+admit.
     }
 
     intros.
     induction H2.
-    red in H0.
-    red in H2.
-    destruct H0 as [n [??]].
+    * red in H0.
+      red in H2.
+      destruct H0 as [n [t [?[??]]]].
+    
  admit. (* a winning candidate is always selected from the group *)
-    apply IHwinner; auto.
-    intros.
-    unfold eliminated' in H5.
-    red in H5.
-    destruct H5.
-    eapply H1; eauto.
-    subst c'.
- admit. (* an eliminated candidate is never selected from the group *)
+
+    * apply IHwinner; auto.
+      hnf.      
+ admit.
   Qed.
