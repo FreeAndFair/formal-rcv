@@ -1,0 +1,246 @@
+-- This tabulator system specification is written in the EBON
+-- specification language, based upon the BON specification language
+-- from Walden and Nerson.  See http://bon-method.com/ for more
+-- information about BON and http://kindsoftware.com/ for more
+-- information about EBON.  Tool support for EBON is provided by the
+-- BON compiler, bonc, and several other tools.  See
+-- https://github.com/kiniry/BON for more information.
+
+-- Informal Charts
+
+-- Tabulator Domain Model
+
+-- This model relies upon the domain model of elections, as originally
+-- defined in the E2E-VIV project and since further refined.
+
+system_chart GALOIS_TABULATOR
+indexing
+  author: "Joseph Kiniry <kiniry@galois.com>";
+  organization: "Galois, Inc.";
+  keywords: "tabulation";
+  created: "Sat Oct 10 14:49:08 EDT 2015";
+  github: "https://github.com/GaloisInc/TBD";
+explanation
+  "The Galois tabulator."
+cluster ELECTION_DOMAIN_MODEL description "Core concepts generic to all \
+ \ elections."
+cluster TABULATION_ROOT description "Main body of tabulation system."
+cluster TABULATION_IO description "Types stipulating the inputs and \
+ \ outputs of the tabulation algorithm."
+cluster TABULATION_COMPUTATION description "Computations that compute \
+ \ on tabulation inputs to determine tabulation outputs."
+end
+
+cluster_chart TABULATION_ROOT
+explanation
+  "Main body of tabulation system."
+class TABULATOR
+description
+  "The tabulating engine."
+end
+
+cluster_chart TABULATION_IO
+explanation
+  "The input and output artifacts necessary for tabulation."
+class CVR_FILE
+description
+  "A CVR file."
+class CSV_FILE
+description
+  "A CSV file."
+class CONTEST_SPECIFICATION
+description
+  "The specification of a single contest."
+class CONTEST_SPECIFICATION_FILE
+description
+  "A file that contains a single contest specification."
+class CONTEST_RESULT_FILE
+description
+  "A file describing a contest result."
+class CSV
+description
+  "A comma-separated value, or its equivalent."
+end
+
+cluster_chart TABULATION_COMPUTATION
+explanation
+  "Computational concepts associated with tabulation.  Typically sets \
+ \ of ballots are tabulated to determine winning candidates or an answer \
+ \ to a ballot question."
+class TABULATION_ALGORITHM
+description
+  "A function that tabulates according to a specific election method."
+class PLURALITY_TABULATION_ALGORITHM
+description
+  "Tabulation of the plurality voting method."
+class RCV_TABULATION_ALGORITHM
+description
+  "A tabulator for an RCV voting methods."
+class SAN_FRANCISCO_RCV_TABULATION_ALGORITHM
+description
+  "A tabulator for San Francisco County and City's version of an RCV method."
+class APPROVAL_TABULATION_ALGORITHM
+description
+  "A tabulator for an approval voting method."
+end
+
+class_chart TABULATOR
+explanation
+  "The engine that concretizes the input and tabulation of votes to \
+ \ produce results for a variety of voting methods."
+query
+  "What kind of voting method do you support?",
+  "What is the result of tabulating this contest?"
+command
+  "Create a tabulator based upon this voting method."
+end
+
+class_chart TABULATION_ALGORITHM
+explanation
+  "A function that tabulates according to a specific election method."
+query
+  "What kind of voting method do you support?",
+  "What is the result of tabulating this contest?"
+command
+  "Create a tabulation algorithm based upon this voting method."
+end
+
+class_chart PLURALITY_TABULATION_ALGORITHM
+explanation
+  "Tabulation of the plurality voting method."
+query
+  "What is the result of tabulating this contest using a plurality \
+ \ voting method?"
+end
+
+class_chart RCV_TABULATION_ALGORITHM
+explanation
+  "A tabulator for an RCV voting methods."
+query
+  "What is the result of tabulating this contest using an RCV  \
+ \ voting method?"
+end
+
+class_chart SAN_FRANCISCO_RCV_TABULATION_ALGORITHM
+explanation
+  "A tabulator for San Francisco County and City's version of an RCV method."
+query
+  "What is the result of tabulating this contest using an RCV  \
+ \ voting method?"
+end
+
+class_chart APPROVAL_TABULATION_ALGORITHM
+explanation
+  "A tabulator for an approval voting method."
+query
+  "What is the result of tabulating this contest using an approval \
+ \ voting method?"
+end
+
+static_diagram TABULATOR_ARCHITECTURE
+  -- This shows the overall architecture of the tabulator.
+component
+  cluster TABULATION_IO
+  cluster TABULATION_COMPUTATION
+  class TABULATOR
+  TABULATOR client TABULATION_IO
+  TABULATOR client TABULATION_COMPUTATION
+end
+
+dynamic_diagram TABULATION_INITIALIZATION
+  -- How the tabulator initializes itself.
+component
+  scenario "INIT: Determine which contest to tabulate and construct \
+          \ relevant data structures."
+  action
+    "1-3" "Contest specification."
+    "4" "Input initialization."
+    "5" "Tabulation initialization."
+    "6-7" "Output initialization."
+  end
+  object_group Tabulation_initialization
+  component
+    object TABULATOR
+    object CONTEST_SPECIFICATION
+    object_group Tabulation_configuration
+    component
+      object ARGUMENTS
+      object CONTEST_SPECIFICATION_FILE
+    end
+    object_stack CANDIDATE
+    object_group Tabulation_input
+    component
+      object_stack CVR_FILE
+    end
+    object_stack CVR
+    object CONTEST_RESULT
+    object CONTEST_RESULT_FILE
+  end
+
+  -- parse command-line input to determine which contest to tabulate
+  TABULATOR calls ARGUMENTS "1"
+  -- read in the relevant contest specification file
+  TABULATOR calls CONTEST_SPECIFICATION_FILE "2"
+  -- create the contest specification
+  TABULATOR calls CONTEST_SPECIFICATION "3"
+  -- open the relevant CVR_FILEs
+  TABULATOR calls CVR_FILE "4"
+  -- create and configure the appropriate tabulation algorithm
+  TABULATION calls TABULATION_ALGORITHM "5"
+  -- initialize the contest result
+  TABULATOR calls CONTEST_RESULT "6"
+  -- prepare the contest result file
+  TABULATOR calls CONTEST_RESULT_FILE "7"
+end
+
+dynamic_diagram TABULATION_OUTPUT_CONTEST_RESULT
+  -- How the tabulator summarizes its output.
+component
+  scenario "OUTPUT: Output the results of a tabulation computation."
+  action
+    "1" "Read the complete contest result."
+    "2" "Write its contents to the contest result file."
+  end
+  object_group Tabulation_output
+  component
+    TABULATOR calls CONTEST_RESULT "2"
+    TABULATOR calls CONTEST_RESULT_FILE "2"
+  end
+end
+
+dynamic_diagram TABULATION_TABULATING
+  -- How the tabulator tabulates.
+component
+  scenario "TABULATING: Tabulate all ballots for a given contest."
+  action
+    "1-3" "Read in a set of (CANDIDATE, CVR) pairs."
+    "4" "Update contest result."
+  end
+  object_group Tabulation_tabulating
+  component
+    -- for each entry in each CVR file, interact with the appropriate
+    -- candidate and CVR
+    TABULATOR calls CVR_FILE "1"
+    TABULATOR calls CANDIDATE "2"
+    TABULATOR calls CVR "3"
+    TABULATOR calls CONTEST_RESULT "4"
+  end
+end
+
+dynamic_diagram TABULATOR_DYNAMIC_ARCHITECTURE
+  -- This shows the overall dynamic architecture of the tabulator.
+component
+  scenario "STABLE: The stable dynamic configuration of the tabulator."
+  action
+    "1" "Tabulator initialization."
+    "2" "Tabulating."
+    "3" "Output contest result."
+  end
+  object TABULATOR
+  object_group Tabulation_initialization
+  object_group Tabulation_tabulating
+  object_group Tabulation_output
+  TABULATOR calls Tabulation_initialization "1"
+  TABULATOR calls Tabulation_tabulating "2"
+  TABULATOR calls Tabulation_output "3"
+end
