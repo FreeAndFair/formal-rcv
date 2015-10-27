@@ -12,9 +12,9 @@ static_diagram TABULATOR_SUBTYPING
   -- This diagram shows the main subtyping relationships.
 component
   deferred class TABULATION_ALGORITHM
-  class PLURALITY_TABULATION_ALGORITHM
+  effective class PLURALITY_TABULATION_ALGORITHM
   deferred class RCV_TABULATION_ALGORITHM
-  class APPROVAL_TABULATION_ALGORITHM
+  effective class APPROVAL_TABULATION_ALGORITHM
   effective class SAN_FRANCISCO_RCV_TABULATION_ALGORITHM
   PLURALITY_TABULATION_ALGORITHM inherit TABULATION_ALGORITHM
   RCV_TABULATION_ALGORITHM inherit TABULATION_ALGORITHM
@@ -36,6 +36,5 @@ static_diagram TABULATION_REUSED
   -- elections domain model prelude.
 component
   class ARGUMENTS reused
-  class CANDIDATE reused persistent
-  class CONTEST_RESULT reused persistent
+  class CONTEST_RESULT reused
 end

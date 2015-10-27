@@ -9,9 +9,9 @@ component
     "5" "Tabulation initialization."
     "6-7" "Output initialization."
   end
+  object TABULATOR
   object_group Tabulation_initialization
   component
-    object TABULATOR
     object CONTEST
     object_group Tabulation_configuration
     component
@@ -23,7 +23,6 @@ component
     component
       object_stack CVR_FILE
     end
-    object_stack CVR
     object CONTEST_RESULT
     object CONTEST_RESULT_FILE
   end
@@ -44,37 +43,47 @@ component
   TABULATOR calls CONTEST_RESULT_FILE "7"
 end
 
-dynamic_diagram TABULATION_OUTPUT_CONTEST_RESULT
-  -- How the tabulator summarizes its output.
-component
-  scenario "OUTPUT: Output the results of a tabulation computation."
-  action
-    "1" "Read the complete contest result."
-    "2" "Write its contents to the contest result file."
-  end
-  object_group Tabulation_output
-  component
-    TABULATOR calls CONTEST_RESULT "2"
-    TABULATOR calls CONTEST_RESULT_FILE "2"
-  end
-end
+-- @design kiniry 27 Oct 2015 - Current focus of dynamic specification.
 
 dynamic_diagram TABULATION_TABULATING
   -- How the tabulator tabulates.
 component
   scenario "TABULATING: Tabulate all ballots for a given contest."
   action
-    "1-3" "Read in a set of (CANDIDATE, CVR) pairs."
-    "4" "Update contest result."
+    "1-2" "Read in a set of CVRs."
+    "3" "Delegate the computation of the result to the tabulator."
   end
+  object TABULATOR
   object_group Tabulation_tabulating
   component
+    object TABULATION_ALGORITHM
+    object CVR_FILE
+    -- The SET[CVR] derived from CVR_FILE used in tabulation.
+    object_stack CVR
     -- for each entry in each CVR file, interact with the appropriate
     -- candidate and CVR
-    TABULATOR calls CVR_FILE "1"
-    TABULATOR calls CANDIDATE "2"
-    TABULATOR calls CVR "3"
-    TABULATOR calls CONTEST_RESULT "4"
+  end
+  TABULATOR calls CVR_FILE "1"
+  TABULATOR calls CVR "2"
+  TABULATOR calls TABULATION_ALGORITHM "3"
+end
+
+dynamic_diagram TABULATION_OUTPUT_CONTEST_RESULT
+  -- How the tabulator summarizes its output.
+component
+  scenario "OUTPUT: Output the results of a tabulation computation."
+  action
+    "1" "Request the result of tabulation from the current algorithm."
+    "2" "Read the complete contest result."
+    "3" "Write its contents to the contest result file."
+  end
+  object TABULATOR
+  object TABULATION_ALGORITHM
+  object_group Tabulation_output
+  component
+    TABULATOR calls TABULATION_ALGORITHM "1"
+    TABULATOR calls CONTEST_RESULT "2"
+    TABULATOR calls CONTEST_RESULT_FILE "3"
   end
 end
 

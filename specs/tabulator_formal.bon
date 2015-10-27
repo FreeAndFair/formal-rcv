@@ -59,6 +59,7 @@ component
       deferred voting_method : VOTING_METHOD
       deferred contest_result : CONTEST_RESULT
         -> c : CONTEST
+        -> cvrs: SET[CVR]
       create: TABULATION_COMPUTATION
         -> vm: VOTING_METHOD
         ensure Result.voting_method = vm end

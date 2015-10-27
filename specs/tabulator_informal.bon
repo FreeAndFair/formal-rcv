@@ -137,13 +137,14 @@ explanation
   "A function that tabulates according to a specific election method."
 query
   "What kind of voting method do you support?",
-  "What is the result of tabulating this contest?",
+  "What is the result of tabulating this contest with that set of CVRs?",
   "Create a tabulation algorithm based upon this voting method."
 end
 
 class_chart PLURALITY_TABULATION_ALGORITHM
 explanation
   "Tabulation of the plurality voting method."
+inherit TABULATION_ALGORITHM
 query
   "What is the result of tabulating this contest using a plurality \
  \ voting method?"
@@ -152,6 +153,7 @@ end
 class_chart RCV_TABULATION_ALGORITHM
 explanation
   "A tabulator for an RCV voting methods."
+inherit TABULATION_ALGORITHM
 query
   "What is the result of tabulating this contest using an RCV  \
  \ voting method?"
@@ -160,6 +162,7 @@ end
 class_chart SAN_FRANCISCO_RCV_TABULATION_ALGORITHM
 explanation
   "A tabulator for San Francisco County and City's version of an RCV method."
+inherit RCV_TABULATION_ALGORITHM
 query
   "What is the result of tabulating this contest using an RCV  \
  \ voting method?"
@@ -168,6 +171,7 @@ end
 class_chart APPROVAL_TABULATION_ALGORITHM
 explanation
   "A tabulator for an approval voting method."
+inherit TABULATION_ALGORITHM
 query
   "What is the result of tabulating this contest using an approval \
  \ voting method?"
