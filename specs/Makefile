@@ -1,13 +1,36 @@
 SYSTEM = tabulator
 ELECTION_PRELUDE = ~/Sandboxes/Elections/EBON/elections_domain_model.bon
-INFORMAL_BON_FILES = tabulator.bon
-FORMAL_BON_FILES = 
+INFORMAL_BON_FILES = $(SYSTEM)_informal.bon
+STATIC_MODEL_FILES = $(SYSTEM)_static_model.bon
+DYNAMIC_MODEL_FILES = $(SYSTEM)_dynamic_model.bon
+FORMAL_BON_FILES = $(SYSTEM)_formal.bon
 REQUIREMENTS = 
 BON_FILES = $(ELECTION_PRELUDE) $(INFORMAL_BON_FILES) $(FORMAL_BON_FILES) $(REQUIREMENTS)
 
-.PHONY: all clean realclean
+.PHONY: all clean realclean \
+	typecheck typecheck-consistency \
+	typecheck-informal typecheck-formal \
+	typecheck-static typecheck-dynamic
 
-all: $(SYSTEM)-iig.dot index.txt index.html html/index.html
+all: typecheck $(SYSTEM)-iig.dot index.txt index.html html/index.html
+
+typecheck: typecheck-informal typecheck-formal \
+	typecheck-static typecheck-dynamic typecheck-consistency
+
+typecheck-consistency:
+	bonc -cc -tc $(ELECTION_PRELUDE) $(INFORMAL_BON_FILES) $(FORMAL_BON_FILES)
+
+typecheck-informal:
+	bonc -tc -i -ci $(ELECTION_PRELUDE) $(INFORMAL_BON_FILES)
+
+typecheck-formal:
+	bonc -tc -f -cf $(ELECTION_PRELUDE) $(FORMAL_BON_FILES)
+
+typecheck-static:
+	bonc -tc -i -ci $(ELECTION_PRELUDE) $(INFORMAL_BON_FILES) $(STATIC_MODEL_FILES)
+
+typecheck-dynamic:
+	bonc -tc -i -ci $(ELECTION_PRELUDE) $(INFORMAL_BON_FILES) $(DYNAMIC_MODEL_FILES)
 
 realclean:
 	rm -rf html

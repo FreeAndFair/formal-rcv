@@ -1,0 +1,41 @@
+static_diagram TABULATOR_ARCHITECTURE
+  -- This shows the overall architecture of the tabulator.
+component
+  cluster TABULATION_IO
+  cluster TABULATION_COMPUTATION
+  root class TABULATOR interfaced
+  TABULATOR client TABULATION_IO
+  TABULATOR client TABULATION_COMPUTATION
+end
+
+static_diagram TABULATOR_SUBTYPING
+  -- This diagram shows the main subtyping relationships.
+component
+  deferred class TABULATION_ALGORITHM
+  class PLURALITY_TABULATION_ALGORITHM
+  deferred class RCV_TABULATION_ALGORITHM
+  class APPROVAL_TABULATION_ALGORITHM
+  effective class SAN_FRANCISCO_RCV_TABULATION_ALGORITHM
+  PLURALITY_TABULATION_ALGORITHM inherit TABULATION_ALGORITHM
+  RCV_TABULATION_ALGORITHM inherit TABULATION_ALGORITHM
+  SAN_FRANCISCO_RCV_TABULATION_ALGORITHM inherit RCV_TABULATION_ALGORITHM
+  APPROVAL_TABULATION_ALGORITHM inherit TABULATION_ALGORITHM
+end
+
+static_diagram TABULATION_PERSISTENCE
+  -- This diagram shows which classes are persistent.
+component
+  class CVR_FILE persistent
+  class CSV_FILE persistent
+  class CONTEST_FILE persistent
+  class CONTEST_RESULT_FILE persistent
+end
+
+static_diagram TABULATION_REUSED
+  -- This diagram shows which classes are reused from our
+  -- elections domain model prelude.
+component
+  class ARGUMENTS reused
+  class CANDIDATE reused persistent
+  class CONTEST_RESULT reused persistent
+end

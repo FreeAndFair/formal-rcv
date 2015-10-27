@@ -1,0 +1,97 @@
+static_diagram TABULATOR_TOPLEVEL
+component
+  cluster TABULATION_ROOT
+  component
+    class TABULATOR
+    feature
+      voting_method : VOTING_METHOD
+      contest_result : CONTEST_RESULT
+        -> c : CONTEST
+      create : TABULATOR
+        -> vm : VOTING_METHOD
+      tabulate : CONTEST_RESULT_FILE
+        -> args : ARGUMENTS
+    end
+  end
+end
+
+static_diagram TABULATOR_TABULATION_IO
+component
+  cluster TABULATION_IO
+  component
+    class CVR_FILE persistent
+    inherit FILE
+    feature
+      cvrs: LIST[CVR]
+    end
+    class CSV_FILE persistent
+    inherit FILE
+    feature
+      csvs: LIST[CSV]
+    end
+    class CONTEST_FILE persistent
+    inherit FILE
+    feature
+      contest: CONTEST
+    end
+    class CONTEST_RESULT_FILE persistent
+    inherit FILE
+    feature
+      contest_result: CONTEST_RESULT
+    end
+    class CSV reused
+    inherit TUPLE
+    feature
+      separator: CHARACTER
+      parse: CSV
+        -> s: STRING
+      count: NATURAL
+    end
+  end
+end
+
+static_diagram TABULATOR_TABULATION_ALGORITHMS
+component
+  cluster TABULATION_COMPUTATION
+  component
+    deferred class TABULATION_ALGORITHM
+    feature
+      deferred voting_method : VOTING_METHOD
+      deferred contest_result : CONTEST_RESULT
+        -> c : CONTEST
+      create: TABULATION_COMPUTATION
+        -> vm: VOTING_METHOD
+        ensure Result.voting_method = vm end
+    end
+    effective class PLURALITY_TABULATION_ALGORITHM
+    inherit TABULATION_ALGORITHM
+    feature
+      effective voting_method : VOTING_METHOD
+        ensure Result = PLURALITY end
+      effective contest_result : CONTEST_RESULT
+        -> c : CONTEST
+    end
+    deferred class RCV_TABULATION_ALGORITHM
+    inherit TABULATION_ALGORITHM
+    feature
+      deferred voting_method : VOTING_METHOD
+        ensure Result : RCV end
+    end
+    effective class APPROVAL_TABULATION_ALGORITHM
+    inherit TABULATION_ALGORITHM
+    feature
+      effective voting_method : VOTING_METHOD
+        ensure Result = APPROVAL end
+      effective contest_result : CONTEST_RESULT
+        -> c : CONTEST
+    end
+    effective class SAN_FRANCISCO_RCV_TABULATION_ALGORITHM
+    inherit RCV_TABULATION_ALGORITHM
+    feature
+      effective voting_method : VOTING_METHOD
+        ensure Result = SAN_FRANCISCO_RCV end
+      effective contest_result : CONTEST_RESULT
+        -> c : CONTEST
+    end
+  end
+end
